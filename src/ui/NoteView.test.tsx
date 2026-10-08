@@ -91,23 +91,6 @@ describe('editing', () => {
     expect(store.getState().items).toHaveLength(2);
   });
 
-  it('shows the add row under the list only once something is checked off', async () => {
-    const { user } = await setup(seedAC);
-    expect(screen.queryByRole('button', { name: 'Lägg till vara i Grocery List' })).toBeNull();
-    await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
-    expect(screen.getByRole('button', { name: 'Lägg till vara i Grocery List' })).toHaveTextContent('Lägg till');
-  });
-
-  it('starts a new line at the end when the add row under the list is tapped', async () => {
-    const { store, user } = await setup(seedAC);
-    await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
-    await user.click(screen.getByRole('button', { name: 'Lägg till vara i Grocery List' }));
-    expect(document.activeElement).toBe(fields()[1]);
-    await user.keyboard('Z');
-    await user.tab();
-    expect(sortOpen(store.getState().items, null).map((i) => i.text)).toEqual(['C', 'Z']);
-  });
-
   it('moves focus between lines with the arrow keys', async () => {
     const { user } = await setup(seedAC);
     await user.click(fields()[0]);

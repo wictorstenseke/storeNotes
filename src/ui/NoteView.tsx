@@ -43,9 +43,9 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
         <div className="mx-auto flex min-h-full max-w-xl flex-col pb-6 pt-[env(safe-area-inset-top)]">
           {/* Zero height, so the button hangs out of it and stays in view while the list scrolls. */}
           <div className="pointer-events-none sticky top-[calc(env(safe-area-inset-top)+1.25rem)] z-20 mt-5 h-0 px-5">
-            <div className="pointer-events-auto w-fit">{header}</div>
+            <div className="pointer-events-auto ml-auto w-fit">{header}</div>
           </div>
-          <div className="flex h-11 items-center justify-end px-5">
+          <div className="flex h-11 items-center px-5">
             <SyncIndicator />
           </div>
           {banner}
