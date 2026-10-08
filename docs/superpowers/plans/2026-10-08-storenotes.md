@@ -6014,13 +6014,16 @@ ls public
 
 Expected in `public/`: `pwa-64x64.png`, `pwa-192x192.png`, `pwa-512x512.png`, `maskable-icon-512x512.png`, `apple-touch-icon-180x180.png`, `favicon.ico`.
 
-In `vite.config.ts`, add the import and the plugin:
+GitHub Pages serves the app under `/<repo>/`, so the build reads its base path from `BASE_PATH` (set by the deploy workflow; `/` locally). The manifest's start URL and scope follow the base automatically.
+
+In `vite.config.ts`, add the import, the `base` line and the plugin:
 
 ```ts
 import { VitePWA } from 'vite-plugin-pwa';
 ```
 
 ```ts
+  base: process.env.BASE_PATH ?? '/',
   plugins: [
     react(),
     tailwindcss(),
@@ -6031,7 +6034,6 @@ import { VitePWA } from 'vite-plugin-pwa';
         name: 'storeNotes',
         short_name: 'storeNotes',
         display: 'standalone',
-        start_url: '/',
         background_color: '#ffffff',
         theme_color: '#ffffff',
         icons: [
@@ -6048,18 +6050,70 @@ import { VitePWA } from 'vite-plugin-pwa';
 In `index.html`, add inside `<head>`:
 
 ```html
-    <link rel="icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <link rel="icon" href="%BASE_URL%favicon.ico" />
+    <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon-180x180.png" />
+```
+
+`.github/workflows/deploy.yml`:
+
+```yaml
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
 ```
 
 - [ ] **Step 3: Verify the build**
 
 ```bash
-npm test && npm run typecheck && npm run build
+npm test && npm run typecheck && BASE_PATH=/storeNotes/ npm run build
 ls dist/sw.js dist/manifest.webmanifest
+grep -o '"start_url":"[^"]*"' dist/manifest.webmanifest
+grep -o 'href="[^"]*favicon.ico"' dist/index.html
 ```
 
-Expected: tests and types pass; both files exist.
+Expected: tests and types pass; both files exist; the start URL is `/storeNotes/` and the favicon link is `/storeNotes/favicon.ico`.
 
 - [ ] **Step 4: Commit**
 
@@ -6099,18 +6153,22 @@ Wictor provides his OpenRouter API key and the two email addresses:
 npx supabase secrets set OPENROUTER_API_KEY=<key> OPENROUTER_MODEL=<model-id> ALLOWED_EMAILS=<email-1>,<email-2>
 ```
 
-- [ ] **Step 7: Deploy the web app (Wictor)**
+- [ ] **Step 7: Deploy the web app to GitHub Pages (Wictor)**
+
+On a free GitHub plan, Pages only works for a public repository, which makes the code and the store layouts in `stores.ts` public. The Supabase URL and anon key are public by design; the OpenRouter key and service-role key never enter the repository. Confirm with Wictor that a public repository is fine, and what to name it, before creating it.
 
 ```bash
-npx vercel link
-npx vercel env add VITE_SUPABASE_URL production
-npx vercel env add VITE_SUPABASE_ANON_KEY production
-npx vercel --prod
+gh repo create <repo-name> --public --source=. --remote=origin
+gh variable set VITE_SUPABASE_URL --body "<project-url>"
+gh variable set VITE_SUPABASE_ANON_KEY --body "<anon-key>"
+gh api -X POST "repos/{owner}/{repo}/pages" -f build_type=workflow
+git push -u origin main
+gh run watch
 ```
 
-Enter the project URL and anon key when asked. Expected: a production URL.
+Expected: the Deploy workflow finishes green and the app is at `https://<github-user>.github.io/<repo-name>/`.
 
-In the Supabase dashboard, Authentication → URL Configuration: set Site URL to the production URL.
+In the Supabase dashboard, Authentication → URL Configuration: set Site URL to that URL.
 
 - [ ] **Step 8: Check categorisation on the deployed app**
 
@@ -6141,5 +6199,5 @@ On both iPhones: open the production URL in Safari, Share → Add to Home Screen
 - [ ] Text sizes look right, nothing zooms when a field is focused, dark mode follows the phone.
 - [ ] With Reduce Motion on (Settings → Accessibility → Motion), items change place without animation.
 
-Fix what fails, redeploy with `npx vercel --prod`, and repeat the failed checks.
+Fix what fails, commit, redeploy with `git push`, and repeat the failed checks.
 

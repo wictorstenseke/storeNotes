@@ -146,7 +146,7 @@ Every store's baseline order lists all of them.
 - `fractional-indexing` for item and section positions.
 - Supabase: Auth, Postgres with row-level security, Realtime, one Edge Function.
 - OpenRouter for categorisation, using Claude Haiku 5.5 by default.
-- Static hosting on Vercel.
+- Static hosting on GitHub Pages for now, deployed by a GitHub Actions workflow on every push to `main`. The app is served under the repository path (`/<repo>/`), so the build takes its base path from the environment.
 
 ### Units
 
