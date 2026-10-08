@@ -359,6 +359,17 @@ export function SectionView({ section }: { section: Section }) {
           </SortableContext>
         </DndContext>
       </div>
+      {/* With nothing open there is no line to tap, so offer one. */}
+      {open.length === 0 && (
+        <button
+          type="button"
+          aria-label={`Lägg till vara i ${section.title || 'listan'}`}
+          className="flex min-h-[30px] w-full items-start px-5 text-left text-ink-2"
+          onClick={() => startLine(null, 0)}
+        >
+          <span className="py-1 text-[16px] italic leading-[22px]">Lägg till</span>
+        </button>
+      )}
       <DoneGroup
         items={done}
         onUncheck={note.uncheckItem}

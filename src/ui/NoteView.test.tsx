@@ -91,6 +91,28 @@ describe('editing', () => {
     expect(store.getState().items).toHaveLength(2);
   });
 
+  it('offers a row to tap in a list with nothing open, and only then', async () => {
+    const { store, user } = await setup(seedAC);
+    const add = () => screen.queryByRole('button', { name: 'Lägg till vara i Grocery List' });
+    expect(add()).toBeNull();
+    await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Markera C' }));
+    expect(add()).toHaveTextContent('Lägg till');
+    await user.click(add()!);
+    expect(document.activeElement).toBe(fields()[0]);
+    await user.keyboard('Z');
+    await user.tab();
+    expect(sortOpen(store.getState().items, null).map((i) => i.text)).toEqual(['Z']);
+  });
+
+  it('offers the row in a brand new empty list too', async () => {
+    const { store } = await setup();
+    act(() => {
+      store.getState().addSection('Gifts');
+    });
+    expect(screen.getByRole('button', { name: 'Lägg till vara i Gifts' })).toBeInTheDocument();
+  });
+
   it('moves focus between lines with the arrow keys', async () => {
     const { user } = await setup(seedAC);
     await user.click(fields()[0]);
