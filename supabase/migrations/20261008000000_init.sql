@@ -176,6 +176,14 @@ alter table public.items enable row level security;
 alter table public.store_orders enable row level security;
 alter table public.category_cache enable row level security;
 
+-- Supabase grants table access to anon by default. Close it, so a request
+-- sent without a session gets an error rather than an empty result that the
+-- app could mistake for "the list is empty".
+revoke all
+  on public.lists, public.list_members, public.list_invites,
+     public.sections, public.items, public.store_orders
+  from anon;
+
 grant select on public.lists, public.list_members to authenticated;
 grant select, insert, update, delete
   on public.list_invites, public.sections, public.items, public.store_orders

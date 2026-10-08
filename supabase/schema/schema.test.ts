@@ -21,6 +21,9 @@ const SUPABASE_STANDIN = `
   create role authenticated nologin;
   create role service_role nologin bypassrls;
   grant usage on schema public, auth to anon, authenticated, service_role;
+  -- Supabase grants table access to all three roles by default, so a table is
+  -- open to signed-out requests unless the migration closes it.
+  alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
   create publication supabase_realtime;
 `;
 
@@ -149,7 +152,12 @@ describe('access rules', () => {
   it('refuses everything to a request that is not signed in', async () => {
     await db.exec('set role anon');
     try {
-      await expect(db.query('select id from public.items')).rejects.toThrow(/permission denied/);
+      // An error, not an empty result: the app must be able to tell "not
+      // signed in" from "nothing there", or it would wipe its local copy.
+      for (const table of ['lists', 'list_members', 'list_invites', 'sections', 'items', 'store_orders', 'category_cache']) {
+        await expect(db.query(`select * from public.${table}`)).rejects.toThrow(/permission denied/);
+      }
+      await expect(db.query(`update public.items set text = 'x'`)).rejects.toThrow(/permission denied/);
       await expect(db.query('select public.bootstrap()')).rejects.toThrow(/permission denied/);
     } finally {
       await db.exec('reset role');
