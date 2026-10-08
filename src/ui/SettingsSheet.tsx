@@ -1,11 +1,4 @@
-import {
-  ChevronLeftIcon,
-  ListOrderedIcon,
-  LogOutIcon,
-  MenuIcon,
-  UserPlusIcon,
-  type LucideIcon,
-} from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, MenuIcon } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -29,6 +22,7 @@ import { useUi } from '../state/uiStore';
 import { StoreOrderPanel } from './StoreOrder';
 import { useKeyboardInset } from './useKeyboardInset';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 
 // Pressing a control must not take focus from the email field, or the keyboard
 // closes, the sheet moves and the tap is lost.
@@ -46,23 +40,23 @@ type PanelProps = {
   onEditOrder(): void;
 };
 
-function MenuRow({
-  icon: Icon,
-  onClick,
-  children,
-}: {
-  icon: LucideIcon;
-  onClick(): void;
-  children: string;
-}) {
+const ROW = 'flex min-h-12 w-full items-center justify-between gap-3 px-4 text-left text-[16px]';
+
+// A white card of rows on the grey sheet: label on the left, value or chevron on the right.
+function Group({ title, children }: { title?: string; children: ReactNode }) {
   return (
-    <button
-      type="button"
-      className="flex h-12 w-full items-center gap-3 px-4 text-left text-[16px] active:bg-field"
-      onClick={onClick}
-    >
-      <Icon className="size-5 shrink-0 text-ink-2" />
+    <section className="flex flex-col gap-1.5">
+      {title && <h3 className="text-[13px] text-ink-2">{title}</h3>}
+      <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg bg-page">{children}</div>
+    </section>
+  );
+}
+
+function NavRow({ onClick, children }: { onClick(): void; children: string }) {
+  return (
+    <button type="button" className={`${ROW} active:bg-field`} onClick={onClick}>
       {children}
+      <ChevronRightIcon className="size-5 shrink-0 text-ink-2" />
     </button>
   );
 }
@@ -143,32 +137,44 @@ export function SettingsPanel({
     void refresh();
   }, [refresh]);
 
+  const showQuickAdd = useUi((s) => s.showQuickAdd);
+  const { setShowQuickAdd } = useUi.getState();
+
   return (
-    <div className="flex flex-col pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
-      {people.length > 0 && (
-        <section aria-label="Delad med" className="pb-3">
-          <h3 className="px-4 pb-1 text-[13px] text-ink-2">Delad med</h3>
-          <ul className="flex flex-col">
-            {people.map((person) => (
-              <li key={person.email} className="flex justify-between px-4 py-1.5 text-[15px]">
-                <span>{person.email}</span>
-                {person.pending && <span className="text-ink-2">Inbjuden</span>}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      <div className="flex flex-col border-t border-line">
-        <MenuRow icon={UserPlusIcon} onClick={onInvite}>
-          Bjud in
-        </MenuRow>
-        <MenuRow icon={ListOrderedIcon} onClick={onEditOrder}>
-          Ändra butikens gångar
-        </MenuRow>
-        <MenuRow icon={LogOutIcon} onClick={onSignOut}>
+    <div className="flex max-h-[70dvh] flex-col gap-5 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+      <Group title="Delning">
+        {people.map((person) => (
+          <div key={person.email} className={ROW}>
+            <span className="min-w-0 truncate">{person.email}</span>
+            <span className="shrink-0 text-ink-2">{person.pending ? 'Inbjuden' : 'Har tillgång'}</span>
+          </div>
+        ))}
+        <NavRow onClick={onInvite}>Bjud in</NavRow>
+      </Group>
+      <Group title="Visning">
+        <div className={`${ROW} py-2`}>
+          <div className="flex min-w-0 flex-col" onClick={() => setShowQuickAdd(!showQuickAdd)}>
+            <span>Snabbtillägg</span>
+            <span id="quick-add-hint" className="text-[13px] text-ink-2">
+              Fältet längst ner för att lägga till varor
+            </span>
+          </div>
+          <Switch
+            aria-label="Snabbtillägg"
+            aria-describedby="quick-add-hint"
+            checked={showQuickAdd}
+            onCheckedChange={setShowQuickAdd}
+          />
+        </div>
+      </Group>
+      <Group title="Butik">
+        <NavRow onClick={onEditOrder}>Ändra butikens gångar</NavRow>
+      </Group>
+      <Group>
+        <button type="button" className={`${ROW} active:bg-field`} onClick={onSignOut}>
           Logga ut
-        </MenuRow>
-      </div>
+        </button>
+      </Group>
     </div>
   );
 }
@@ -242,7 +248,9 @@ export function SettingsSheet({ loadPeople, invite, onSignOut }: SheetProps) {
       </SheetTrigger>
       <SheetContent
         side="bottom"
-        className="gap-0 rounded-t-lg data-[side=bottom]:mx-auto data-[side=bottom]:max-w-xl"
+        className={`gap-0 rounded-t-lg data-[side=bottom]:mx-auto data-[side=bottom]:max-w-xl ${
+          view === 'settings' ? 'bg-field!' : ''
+        }`}
         // Stay at the bottom and extend under the keyboard, so no page shows through.
         style={{ paddingBottom: keyboardInset }}
       >

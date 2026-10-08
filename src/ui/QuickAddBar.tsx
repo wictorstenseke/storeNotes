@@ -5,29 +5,25 @@ import { parseQuickAdd } from '../domain/parseQuickAdd';
 import { byManual } from '../domain/sort';
 import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
-import { useKeyboardInset } from './useKeyboardInset';
 
 // iOS scrolls the page to reveal a field that the keyboard is about to cover, and
 // this field sits at the bottom, so the whole list would scroll away. Focusing it
 // while it is moved out of the way means there is nothing to reveal.
 function focusWithoutScroll(el: HTMLTextAreaElement) {
   if (document.activeElement === el) return;
-  const scrollY = window.scrollY;
   el.style.transform = 'translateY(-9999px)';
   el.focus({ preventScroll: true });
   requestAnimationFrame(() => {
     el.style.transform = '';
-    window.scrollTo(0, scrollY);
   });
 }
 
-export function QuickAddBar() {
+export function QuickAddBar({ keyboardOpen }: { keyboardOpen: boolean }) {
   const note = useNoteStore().getState();
   const sections = useNote((s) => s.sections);
   const chosen = useUi((s) => s.quickAddSectionId);
   const field = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState('');
-  const inset = useKeyboardInset();
   // How many items the last submit added; shown briefly on the button as confirmation.
   const [added, setAdded] = useState(0);
   const clearAdded = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -62,8 +58,8 @@ export function QuickAddBar() {
 
   return (
     <div
-      className="fixed inset-x-0 z-10 border-t border-line bg-page shadow-[0_-4px_16px_rgba(0,0,0,0.12)]"
-      style={{ bottom: inset, paddingBottom: inset > 0 ? 0 : 'env(safe-area-inset-bottom)' }}
+      className="relative z-10 shrink-0 border-t border-line bg-page shadow-[0_-4px_16px_rgba(0,0,0,0.12)]"
+      style={{ paddingBottom: keyboardOpen ? 0 : 'env(safe-area-inset-bottom)' }}
     >
       <form
         className="mx-auto flex max-w-xl flex-col gap-1 px-5 pb-2 pt-3"

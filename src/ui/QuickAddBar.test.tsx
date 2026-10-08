@@ -21,7 +21,7 @@ async function setup(sectionTitles = ['Grocery List', 'Gifts']) {
   const sectionIds = sectionTitles.map((title) => store.getState().addSection(title));
   const view = render(
     <NoteStoreProvider value={store}>
-      <QuickAddBar />
+      <QuickAddBar keyboardOpen={false} />
     </NoteStoreProvider>,
   );
   const textsIn = (sectionId: string) =>
@@ -65,14 +65,11 @@ describe('QuickAddBar', () => {
     expect(screen.getByRole('button', { name: '2 tillagda' })).toBeInTheDocument();
   });
 
-  it('focuses itself on press without letting the page scroll to it', async () => {
+  it('focuses itself on press, taking the default so iOS has nothing to scroll to', async () => {
     await setup();
-    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
     expect(fireEvent.mouseDown(field())).toBe(false);
     expect(document.activeElement).toBe(field());
     await waitFor(() => expect(field().style.transform).toBe(''));
-    expect(scrollTo).toHaveBeenCalled();
-    scrollTo.mockRestore();
   });
 
   it('adds nothing for whitespace', async () => {
@@ -119,36 +116,4 @@ describe('QuickAddBar', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('sits above the on-screen keyboard', async () => {
-    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
-    Object.defineProperty(window, 'visualViewport', {
-      value: { height: 500, offsetTop: 0, addEventListener() {}, removeEventListener() {} },
-      configurable: true,
-    });
-    const { container } = await setup();
-    field().focus();
-    await waitFor(() =>
-      expect((container.firstElementChild as HTMLElement).style.bottom).toBe('300px'),
-    );
-  });
-
-  it('ignores a viewport/innerHeight mismatch while no field is focused', async () => {
-    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
-    Object.defineProperty(window, 'visualViewport', {
-      value: { height: 740, offsetTop: 0, addEventListener() {}, removeEventListener() {} },
-      configurable: true,
-    });
-    const { container } = await setup();
-    expect((container.firstElementChild as HTMLElement).style.bottom).toBe('0px');
-  });
-
-  it('stays put when overscrolling past the top of the page', async () => {
-    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
-    Object.defineProperty(window, 'visualViewport', {
-      value: { height: 800, offsetTop: -80, addEventListener() {}, removeEventListener() {} },
-      configurable: true,
-    });
-    const { container } = await setup();
-    expect((container.firstElementChild as HTMLElement).style.bottom).toBe('0px');
-  });
 });

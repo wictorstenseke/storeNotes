@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { useUi } from '../state/uiStore';
 import { InviteForm, SettingsPanel, SettingsSheet, type Person } from './SettingsSheet';
 
 function setup() {
@@ -32,6 +33,36 @@ describe('SettingsPanel', () => {
       />,
     );
     expect(screen.getByText('anna@example.com')).toBeInTheDocument();
+  });
+
+  it('says who has access and who is only invited', () => {
+    render(
+      <SettingsPanel
+        loadPeople={() => new Promise(() => {})}
+        initialPeople={[
+          { email: 'anna@example.com', pending: false },
+          { email: 'bo@example.com', pending: true },
+        ]}
+        onInvite={vi.fn()}
+        onSignOut={vi.fn()}
+        onEditOrder={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('Har tillgång')).toBeInTheDocument();
+    expect(screen.getByText('Inbjuden')).toBeInTheDocument();
+  });
+
+  it('switches the add-item bar on and off, per device', async () => {
+    useUi.setState({ showQuickAdd: true });
+    const { user } = setup();
+    const toggle = screen.getByRole('switch', { name: 'Snabbtillägg' });
+    expect(toggle).toBeChecked();
+    await user.click(toggle);
+    expect(useUi.getState().showQuickAdd).toBe(false);
+    expect(localStorage.getItem('storenotes.showQuickAdd')).toBe('false');
+    expect(toggle).toHaveAccessibleDescription('Fältet längst ner för att lägga till varor');
+    await user.click(screen.getByText('Snabbtillägg'));
+    expect(useUi.getState().showQuickAdd).toBe(true);
   });
 
   it('asks to invite', async () => {

@@ -135,6 +135,7 @@
   --line: #c7c7cc;
   --field: #f2f2f7;
   --notes: #ffcc00;
+  --done: #ff9f0a;
   --notes-ink: #b58900;
 }
 
@@ -145,6 +146,7 @@
   --line: #48484a;
   --field: #1c1c1e;
   --notes: #ffd60a;
+  --done: #ff9f0a;
   --notes-ink: #ffd60a;
 }
 
@@ -155,6 +157,7 @@
   --color-line: var(--line);
   --color-field: var(--field);
   --color-notes: var(--notes);
+  --color-done: var(--done);
   --color-notes-ink: var(--notes-ink);
 }
 
@@ -174,6 +177,8 @@
     font-size: 16px;
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
+    /* The app is a fixed shell with its own scroll area, so the page itself never scrolls. */
+    overflow: hidden;
   }
 
   textarea,

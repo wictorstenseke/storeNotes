@@ -21,6 +21,7 @@ type UiState = {
   storeId: string | null;
   quickAddSectionId: string | null;
   selection: Selection | null;
+  showQuickAdd: boolean; // the add-item bar at the bottom, per device
   hiddenStoreHints: string[]; // lists that hide the store text beside their menu, per device
   requestFocus(id: string | null): void;
   setHold(hold: Hold | null): void;
@@ -28,6 +29,7 @@ type UiState = {
   setQuickAddSectionId(id: string | null): void;
   setSelection(selection: Selection | null): void;
   toggleStoreHint(sectionId: string): void;
+  setShowQuickAdd(show: boolean): void;
 };
 
 export const useUi = create<UiState>()((set) => ({
@@ -36,10 +38,15 @@ export const useUi = create<UiState>()((set) => ({
   storeId: readSetting('storeId'),
   quickAddSectionId: readSetting('quickAddSectionId'),
   selection: null,
+  showQuickAdd: readSetting('showQuickAdd') !== 'false',
   hiddenStoreHints: readIds('hiddenStoreHints'),
   requestFocus: (focusId) => set({ focusId }),
   setHold: (hold) => set({ hold }),
   setSelection: (selection) => set({ selection }),
+  setShowQuickAdd: (showQuickAdd) => {
+    writeSetting('showQuickAdd', String(showQuickAdd));
+    set({ showQuickAdd });
+  },
   toggleStoreHint: (sectionId) =>
     set((state) => {
       const hiddenStoreHints = state.hiddenStoreHints.includes(sectionId)

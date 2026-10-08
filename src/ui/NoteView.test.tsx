@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Category } from '../domain/categories';
 import { sortOpen } from '../domain/sort';
 import { STORES } from '../domain/stores';
@@ -19,6 +19,7 @@ beforeEach(() => {
     quickAddSectionId: null,
     selection: null,
     hiddenStoreHints: [],
+    showQuickAdd: true,
   });
 });
 
@@ -90,13 +91,21 @@ describe('editing', () => {
     expect(store.getState().items).toHaveLength(2);
   });
 
-  it('starts a new line at the end when the space under the list is tapped', async () => {
+  it('shows the add row under the list only once something is checked off', async () => {
+    const { user } = await setup(seedAC);
+    expect(screen.queryByRole('button', { name: 'Lägg till vara i Grocery List' })).toBeNull();
+    await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
+    expect(screen.getByRole('button', { name: 'Lägg till vara i Grocery List' })).toHaveTextContent('Lägg till');
+  });
+
+  it('starts a new line at the end when the add row under the list is tapped', async () => {
     const { store, user } = await setup(seedAC);
+    await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
     await user.click(screen.getByRole('button', { name: 'Lägg till vara i Grocery List' }));
-    expect(document.activeElement).toBe(fields()[2]);
+    expect(document.activeElement).toBe(fields()[1]);
     await user.keyboard('Z');
     await user.tab();
-    expect(sortOpen(store.getState().items, null).map((i) => i.text)).toEqual(['A', 'C', 'Z']);
+    expect(sortOpen(store.getState().items, null).map((i) => i.text)).toEqual(['C', 'Z']);
   });
 
   it('moves focus between lines with the arrow keys', async () => {
@@ -197,6 +206,55 @@ describe('store order', () => {
   it('has no row of store buttons under the section title', async () => {
     await setup(seedAC);
     expect(screen.queryByRole('group', { name: 'Butik' })).toBeNull();
+  });
+});
+
+describe('keyboard', () => {
+  const viewport = (height: number, offsetTop: number) => {
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+    Object.defineProperty(window, 'visualViewport', {
+      value: { height, offsetTop, addEventListener() {}, removeEventListener() {} },
+      configurable: true,
+    });
+  };
+  const shell = () => screen.getByRole('main').parentElement as HTMLElement;
+  afterEach(() => {
+    Object.defineProperty(window, 'visualViewport', { value: undefined, configurable: true });
+  });
+
+  it('fills the visible area, wherever iOS has panned it, while typing', async () => {
+    viewport(500, 120);
+    const { user } = await setup();
+    await user.click(screen.getByRole('textbox', { name: 'Lägg till vara' }));
+    await waitFor(() => expect(shell().style.height).toBe('500px'));
+    expect(shell().style.top).toBe('120px');
+  });
+
+  it('fills the screen when no field has focus, even if the viewport differs', async () => {
+    viewport(740, 0);
+    await setup();
+    expect(shell().style.height).toBe('');
+    expect(shell().style.top).toBe('0px');
+    expect(shell().style.bottom).toBe('0px');
+  });
+
+  it('ignores the negative offset of a top overscroll', async () => {
+    viewport(500, -80);
+    const { user } = await setup();
+    await user.click(screen.getByRole('textbox', { name: 'Lägg till vara' }));
+    await waitFor(() => expect(shell().style.height).toBe('500px'));
+    expect(shell().style.top).toBe('0px');
+  });
+});
+
+describe('add-item bar setting', () => {
+  it('can be hidden', async () => {
+    await setup();
+    expect(screen.getByRole('textbox', { name: 'Lägg till vara' })).toBeInTheDocument();
+    act(() => useUi.getState().setShowQuickAdd(false));
+    expect(screen.queryByRole('textbox', { name: 'Lägg till vara' })).toBeNull();
+    act(() => useUi.getState().setShowQuickAdd(true));
+    expect(screen.getByRole('textbox', { name: 'Lägg till vara' })).toBeInTheDocument();
   });
 });
 
