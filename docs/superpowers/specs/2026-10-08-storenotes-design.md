@@ -83,7 +83,7 @@ Assumptions:
   3. then manual position,
   4. then item id.
 - Selecting a store never changes the stored manual order.
-- A new line created with Enter in a sorted view takes the category of the line above it as a provisional category so it appears directly below. It is categorised properly once its text is committed.
+- A new line created with Enter in a sorted view is displayed directly below the line it was created from while it is focused. This placement is display-only and not stored. When the line loses focus it follows the normal rules: untagged at the top until its category arrives, then in its category's place.
 
 ### Checking off
 
