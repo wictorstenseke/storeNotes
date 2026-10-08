@@ -155,25 +155,28 @@
   --color-notes-ink: var(--notes-ink);
 }
 
-html,
-body,
-#root {
-  height: 100%;
-}
+/* In the base layer so Tailwind utilities on inputs and buttons still win. */
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
 
-body {
-  margin: 0;
-  background: var(--page);
-  color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
-  font-size: 16px;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-text-size-adjust: 100%;
-}
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    font-size: 16px;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
 
-textarea,
-input,
-button {
-  font: inherit;
-  color: inherit;
+  textarea,
+  input,
+  button {
+    font: inherit;
+    color: inherit;
+  }
 }

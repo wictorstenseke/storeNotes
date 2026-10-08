@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { expect, it } from 'vitest';
 import { App } from './App';
 
-it('renders the app shell', () => {
+it('shows the note with a grocery section', async () => {
   render(<App />);
-  expect(screen.getByText('storeNotes')).toBeInTheDocument();
+  expect(await screen.findByDisplayValue('Grocery List')).toBeInTheDocument();
 });

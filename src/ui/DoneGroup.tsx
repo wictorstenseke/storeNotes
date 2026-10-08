@@ -1,12 +1,15 @@
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import type { Item } from '../domain/types';
+import { MOTION } from './motion';
 
 type Props = { items: Item[]; onUncheck(id: string): void; onClear(): void };
 
 export function DoneGroup({ items, onUncheck, onClear }: Props) {
+  const [list] = useAutoAnimate<HTMLDivElement>(MOTION);
   if (items.length === 0) return null;
   return (
     <div className="mt-1">
-      <div>
+      <div ref={list}>
         {items.map((item) => (
           <button
             key={item.id}

@@ -164,3 +164,14 @@ describe('sections', () => {
     expect(store.getState().sections.map((s) => s.title)).toContain('Gifts');
   });
 });
+describe('reordering', () => {
+  const rows = () => Array.from(document.querySelectorAll('[data-draggable]'));
+
+  it('allows dragging in manual order only', async () => {
+    const { user } = await setup(seedAC);
+    expect(rows()).toHaveLength(2);
+    expect(rows().every((row) => row.getAttribute('data-draggable') === 'true')).toBe(true);
+    await user.click(screen.getByRole('button', { name: STORES[0].name }));
+    expect(rows().every((row) => row.getAttribute('data-draggable') === 'false')).toBe(true);
+  });
+});

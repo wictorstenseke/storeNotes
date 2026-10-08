@@ -1,4 +1,8 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { DndContext, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { effectiveOrder } from '../domain/learning';
 import { sortDone, sortOpen } from '../domain/sort';
 import { getStore } from '../domain/stores';
@@ -7,6 +11,7 @@ import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
 import { DoneGroup } from './DoneGroup';
 import { ItemLine } from './ItemLine';
+import { MOTION } from './motion';
 import { SectionMenu } from './SectionMenu';
 import { StorePicker } from './StorePicker';
 
@@ -59,6 +64,27 @@ function SectionTitle({ title, wantFocus, onFocused, onCommit, onEnter }: TitleP
   );
 }
 
+function Row({ id, draggable, children }: { id: string; draggable: boolean; children: ReactNode }) {
+  const { setNodeRef, listeners, transform, transition, isDragging } = useSortable({
+    id,
+    disabled: !draggable,
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      data-draggable={draggable}
+      style={{
+        transform: CSS.Translate.toString(transform),
+        transition,
+        opacity: isDragging ? 0.6 : 1,
+      }}
+      {...(draggable ? listeners : {})}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function SectionView({ section }: { section: Section }) {
   // Actions are stable, so reading them once per render is safe.
   const note = useNoteStore().getState();
@@ -80,6 +106,25 @@ export function SectionView({ section }: { section: Section }) {
 
   const open = useMemo(() => sortOpen(mine, order, hold), [mine, order, hold]);
   const done = useMemo(() => sortDone(mine), [mine]);
+
+  const manual = order === null;
+  const [openList, animateOpen] = useAutoAnimate<HTMLDivElement>(MOTION);
+  const sensors = useSensors(
+    useSensor(TouchSensor, { activationConstraint: { delay: 300, tolerance: 6 } }),
+  );
+
+  // dnd-kit moves rows itself while dragging; pause auto-animate so the two
+  // do not animate the same rows.
+  const onDragStart = () => {
+    (document.activeElement as HTMLElement | null)?.blur();
+    animateOpen(false);
+  };
+  const onDragEnd = (event: DragEndEvent) => {
+    const overId = event.over?.id;
+    const to = overId === undefined ? -1 : open.findIndex((i) => i.id === overId);
+    if (to >= 0 && overId !== event.active.id) note.moveItem(String(event.active.id), to);
+    requestAnimationFrame(() => animateOpen(true));
+  };
 
   // Create an empty line, hold it at `index` and move focus to it.
   const startLine = (afterId: string | null, index: number) => {
@@ -148,16 +193,27 @@ export function SectionView({ section }: { section: Section }) {
           <StorePicker value={storeId} onChange={ui.setStoreId} />
         </div>
       )}
-      <div>
-        {open.map((item, index) => (
-          <ItemLine
-            key={item.id}
-            item={item}
-            wantFocus={focusId === item.id}
-            {...lineHandlers(item, index)}
-          />
-        ))}
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        onDragCancel={() => animateOpen(true)}
+      >
+        <SortableContext items={open.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+          <div ref={openList}>
+            {open.map((item, index) => (
+              <Row key={item.id} id={item.id} draggable={manual}>
+                <ItemLine
+                  item={item}
+                  wantFocus={focusId === item.id}
+                  {...lineHandlers(item, index)}
+                />
+              </Row>
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
       <button
         type="button"
         aria-label={`Add item to ${section.title || 'section'}`}

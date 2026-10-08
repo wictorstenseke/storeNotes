@@ -7,3 +7,8 @@ afterEach(() => {
   cleanup();
   localStorage.clear();
 });
+import { vi } from 'vitest';
+
+vi.mock('@formkit/auto-animate/react', () => ({
+  useAutoAnimate: () => [() => {}, () => {}],
+}));
