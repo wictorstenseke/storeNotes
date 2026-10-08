@@ -17,11 +17,15 @@ export function ItemLine(props: ItemLineProps) {
   const { item, wantFocus } = props;
   const field = useRef<HTMLTextAreaElement>(null);
   const editing = useRef(false);
+  // True once something has been typed since the line gained focus.
+  const dirty = useRef(false);
   const [draft, setDraft] = useState(item.text);
 
-  // Take changes from outside only while the line is not being edited.
+  // Take changes from outside unless there is typed text to protect. A line
+  // that is only focused must follow them, or leaving it would write the old
+  // text back over the other person's edit.
   useEffect(() => {
-    if (!editing.current) setDraft(item.text);
+    if (!editing.current || !dirty.current) setDraft(item.text);
   }, [item.text]);
 
   // Grow with the content so long text wraps instead of scrolling sideways.
@@ -91,14 +95,19 @@ export function ItemLine(props: ItemLineProps) {
         autoCapitalize="sentences"
         enterKeyHint="next"
         className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-[7px] text-[16px] leading-[22px] caret-notes-ink outline-none"
-        onChange={(event) => setDraft(event.target.value.replace(/\s*[\r\n]+\s*/g, ' '))}
+        onChange={(event) => {
+          dirty.current = true;
+          setDraft(event.target.value.replace(/\s*[\r\n]+\s*/g, ' '));
+        }}
         onKeyDown={onKeyDown}
         onFocus={() => {
           editing.current = true;
+          dirty.current = false;
           props.onFocus();
         }}
         onBlur={() => {
           editing.current = false;
+          dirty.current = false;
           props.onBlur(draft);
         }}
       />

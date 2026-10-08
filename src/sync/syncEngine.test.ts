@@ -213,3 +213,79 @@ describe('two devices', () => {
     expect(b.s().items[0]).toMatchObject({ text: 'Milk', checked: true });
   });
 });
+
+describe('ordering of sync steps', () => {
+  const pause = () => new Promise((resolve) => setTimeout(resolve, 10));
+
+  it('does not let a slow refetch undo a change acknowledged while it was in flight', async () => {
+    const remote = new FakeRemote();
+    const a = await client(remote, 'a');
+    const section = a.s().addSection('Grocery List');
+    const item = a.s().addItem(section, 'Milk');
+    await a.settle();
+
+    let open!: () => void;
+    remote.fetchGate = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    const refetching = a.engine.refetch(); // the snapshot is taken now: Milk unchecked
+    await pause();
+    a.s().checkItem(item, null);
+    await a.settle(); // sent, acknowledged and echoed while the fetch is still out
+    remote.fetchGate = null;
+    open();
+    await refetching;
+    await a.s().reload();
+
+    expect(a.s().items[0].checked).toBe(true);
+  });
+
+  it('does not let a slow refetch undo a change that arrived from the other device', async () => {
+    const remote = new FakeRemote();
+    const a = await client(remote, 'a');
+    const section = a.s().addSection('Grocery List');
+    const item = a.s().addItem(section, 'Milk');
+    await a.settle();
+
+    let open!: () => void;
+    remote.fetchGate = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    const refetching = a.engine.refetch();
+    await pause();
+    const renamed = { ...remote.rows.items.get(item)!, text: 'Oat milk' };
+    remote.rows.items.set(item, renamed);
+    await a.engine.applyRemote('items', renamed);
+    remote.fetchGate = null;
+    open();
+    await refetching;
+    await a.s().reload();
+
+    expect(a.s().items[0].text).toBe('Oat milk');
+  });
+
+  it('makes a second flush wait for the one already running', async () => {
+    const remote = new FakeRemote();
+    const a = await client(remote, 'a');
+    const section = a.s().addSection('Grocery List');
+    await a.settle();
+
+    let open!: () => void;
+    remote.gate = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    a.s().addItem(section, 'Milk');
+    await a.s().idle();
+    void a.engine.flush();
+    let secondDone = false;
+    const second = a.engine.flush().then(() => {
+      secondDone = true;
+    });
+    await pause();
+    expect(secondDone).toBe(false);
+    remote.gate = null;
+    open();
+    await second;
+    expect(await a.outbox.count()).toBe(0);
+  });
+});

@@ -63,6 +63,15 @@ describe('ItemLine', () => {
     expect(field.value).toBe('Milk 2%');
   });
 
+  it('takes a change from the other person while focused if nothing has been typed', async () => {
+    const { field, props, user, rerender } = setup();
+    await user.click(field);
+    rerender(<ItemLine {...props} item={makeItem({ id: 'a', text: 'Oat milk' })} />);
+    expect(field.value).toBe('Oat milk');
+    await user.tab();
+    expect(props.onBlur).toHaveBeenCalledWith('Oat milk');
+  });
+
   it('takes the new text when the item changes and the line is not focused', () => {
     const { field, props, rerender } = setup();
     rerender(<ItemLine {...props} item={makeItem({ id: 'a', text: 'Mjölk' })} />);

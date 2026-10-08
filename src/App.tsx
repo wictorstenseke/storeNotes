@@ -19,9 +19,12 @@ function useSignedIn(sb: SupabaseClient): boolean | undefined {
 
   useEffect(() => {
     const check = async () => {
-      const { data } = await sb.auth.getSession();
+      const { data, error } = await sb.auth.getSession();
+      const hasList = Boolean(readSetting('listId'));
       if (data.session) setSignedIn(true);
-      else if (!readSetting('listId') || navigator.onLine) setSignedIn(false);
+      // An error means the session could not be checked (signal up, server
+      // unreachable), not that it is gone. Keep the note open in that case.
+      else if (!hasList || (!error && navigator.onLine)) setSignedIn(false);
     };
     void check();
     const { data } = sb.auth.onAuthStateChange((event, session) => {

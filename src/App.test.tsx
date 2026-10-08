@@ -6,10 +6,10 @@ import { writeSetting } from './state/deviceSettings';
 import type { Runtime } from './sync/runtime';
 import { makeStore } from './test/helpers';
 
-function fakeSupabase(session: unknown): SupabaseClient {
+function fakeSupabase(session: unknown, error: unknown = null): SupabaseClient {
   return {
     auth: {
-      getSession: async () => ({ data: { session }, error: null }),
+      getSession: async () => ({ data: { session }, error }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     },
   } as unknown as SupabaseClient;
@@ -59,6 +59,16 @@ describe('App', () => {
     writeSetting('listId', 'list-1');
     render(<App sb={fakeSupabase(null)} start={fakeStart} />);
     expect(await screen.findByLabelText('Email')).toBeInTheDocument();
+  });
+
+  it('keeps the note open when the session could not be checked', async () => {
+    // Signal is up but the server is unreachable: no session comes back, with an error.
+    writeSetting('listId', 'list-1');
+    render(<App sb={fakeSupabase(null, { message: 'Failed to fetch' })} start={fakeStart} />);
+    expect(await screen.findByDisplayValue('Grocery List')).toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByLabelText('Email')).toBeNull();
+    expect(screen.getByDisplayValue('Grocery List')).toBeInTheDocument();
   });
 
   it('offers a retry when first-time setup cannot reach the server', async () => {

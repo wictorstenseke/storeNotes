@@ -44,8 +44,12 @@ function merge(local: Row | undefined, incoming: Row, fields: Set<string> | unde
 }
 
 export class SyncEngine {
-  private busy = false;
+  private current: Promise<void> | null = null;
   private again = false;
+  // Counts changes to the local copy that came from the server side: an
+  // acknowledged mutation or an applied remote row. A snapshot fetched before
+  // the count moved may be older than what is already stored.
+  private epoch = 0;
   private stalled = false;
   private rejected = false;
   private stopped = false;
@@ -60,25 +64,33 @@ export class SyncEngine {
     private hooks: SyncHooks,
   ) {}
 
-  async flush(): Promise<void> {
-    if (this.busy) {
+  // Send everything queued. A call made while a flush is running waits for
+  // that flush, which also picks up whatever was queued in the meantime.
+  flush(): Promise<void> {
+    if (this.current) {
       this.again = true;
-      return;
+      return this.current;
     }
-    this.busy = true;
+    const running = this.run();
+    this.current = running;
+    return running;
+  }
+
+  private async run(): Promise<void> {
     try {
       do {
         this.again = false;
         await this.drain();
+        this.hooks.onStatus?.(await this.outbox.count());
+        if (this.rejected) {
+          this.rejected = false;
+          this.hooks.onRejected();
+          await this.refetch();
+        }
       } while (this.again && !this.stalled);
     } finally {
-      this.busy = false;
-    }
-    this.hooks.onStatus?.(await this.outbox.count());
-    if (this.rejected) {
-      this.rejected = false;
-      this.hooks.onRejected();
-      await this.refetch();
+      // Cleared before returning, so a caller can never be handed a finished run.
+      this.current = null;
     }
     if (this.stalled) this.retryLater();
     else this.retryMs = FIRST_RETRY_MS;
@@ -96,6 +108,7 @@ export class SyncEngine {
         return;
       }
       if (!result.ok) this.rejected = true;
+      this.epoch += 1;
       await this.outbox.done(mutation.seq!);
     }
   }
@@ -110,33 +123,48 @@ export class SyncEngine {
   }
 
   async refetch(): Promise<void> {
-    const snapshot = await this.remote.fetchAll(this.listId);
-    if (!snapshot) return;
     const { db } = this;
-    await db.transaction('rw', [db.sections, db.items, db.store_orders, db.outbox], async () => {
-      const pending = await this.outbox.pendingFields();
-      for (const table of TABLES) {
-        const store = db.table(table);
-        const seen = new Set<string>();
-        for (const row of snapshot[table] as Row[]) {
-          const key = keyOf(table, row);
-          seen.add(key);
-          const local = (await store.get(primaryKey(table, row))) as Row | undefined;
-          await store.put(merge(local, row, pending.get(`${table}:${key}`)));
-        }
-        for (const local of (await store.toArray()) as Row[]) {
-          const key = keyOf(table, local);
-          if (!seen.has(key) && !pending.has(`${table}:${key}`)) {
-            await store.delete(primaryKey(table, local));
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const epoch = this.epoch;
+      const snapshot = await this.remote.fetchAll(this.listId);
+      if (!snapshot) return;
+      const applied = await db.transaction(
+        'rw',
+        [db.sections, db.items, db.store_orders, db.outbox],
+        async () => {
+          const pending = await this.outbox.pendingFields();
+          // Something was acknowledged or arrived while the fetch was out, so
+          // this snapshot may be older than the local copy. Fetch again.
+          if (epoch !== this.epoch) return false;
+          for (const table of TABLES) {
+            const store = db.table(table);
+            const seen = new Set<string>();
+            for (const row of snapshot[table] as Row[]) {
+              const key = keyOf(table, row);
+              seen.add(key);
+              const local = (await store.get(primaryKey(table, row))) as Row | undefined;
+              await store.put(merge(local, row, pending.get(`${table}:${key}`)));
+            }
+            for (const local of (await store.toArray()) as Row[]) {
+              const key = keyOf(table, local);
+              if (!seen.has(key) && !pending.has(`${table}:${key}`)) {
+                await store.delete(primaryKey(table, local));
+              }
+            }
           }
-        }
+          return true;
+        },
+      );
+      if (applied) {
+        this.hooks.onChange();
+        return;
       }
-    });
-    this.hooks.onChange();
+    }
   }
 
   async applyRemote(table: TableName, row: Row): Promise<void> {
     const { db } = this;
+    this.epoch += 1;
     await db.transaction('rw', [db.sections, db.items, db.store_orders, db.outbox], async () => {
       const store = db.table(table);
       const key = primaryKey(table, row);

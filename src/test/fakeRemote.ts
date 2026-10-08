@@ -12,6 +12,8 @@ export class FakeRemote implements Remote {
   mode: 'ok' | 'transient' | 'permanent' = 'ok';
   offline = false;
   gate: Promise<void> | null = null;
+  // Holds a fetch after its snapshot was taken, like a slow response.
+  fetchGate: Promise<void> | null = null;
   sent: Mutation[] = [];
   private listeners = new Set<(table: TableName, row: Row) => void>();
 
@@ -39,11 +41,13 @@ export class FakeRemote implements Remote {
     if (this.offline) return null;
     const live = (table: TableName) =>
       [...this.rows[table].values()].filter((row) => !row.deleted_at).map((row) => ({ ...row }));
-    return {
+    const snapshot = {
       sections: live('sections'),
       items: live('items'),
       store_orders: live('store_orders'),
     } as unknown as Snapshot;
+    if (this.fetchGate) await this.fetchGate;
+    return snapshot;
   }
 
   subscribe(_listId: string, onRow: (table: TableName, row: Row) => void): () => void {
