@@ -41,7 +41,7 @@ describe('App', () => {
   it('shows sign-in on a new device', async () => {
     const start = vi.fn(fakeStart);
     render(<App sb={fakeSupabase(null)} start={start} />);
-    expect(await screen.findByLabelText('Email')).toBeInTheDocument();
+    expect(await screen.findByLabelText('E-post')).toBeInTheDocument();
     expect(start).not.toHaveBeenCalled();
   });
 
@@ -54,7 +54,7 @@ describe('App', () => {
     let runtime!: Runtime;
     const start = async () => (runtime = await fakeStart());
     render(<App sb={fakeSupabase({ user: { id: 'u1' } })} start={start} />);
-    expect(await screen.findByRole('status', { name: 'Invitation' })).toHaveTextContent('anna@example.com invited you');
+    expect(await screen.findByRole('status', { name: 'Inbjudan' })).toHaveTextContent('anna@example.com har bjudit in dig');
     expect(runtime.acceptInvite).not.toHaveBeenCalled();
   });
 
@@ -63,13 +63,13 @@ describe('App', () => {
     setOnline(false);
     render(<App sb={fakeSupabase(null)} start={fakeStart} />);
     expect(await screen.findByDisplayValue('Grocery List')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Email')).toBeNull();
+    expect(screen.queryByLabelText('E-post')).toBeNull();
   });
 
   it('asks to sign in again when online with no session', async () => {
     writeSetting('listId', 'list-1');
     render(<App sb={fakeSupabase(null)} start={fakeStart} />);
-    expect(await screen.findByLabelText('Email')).toBeInTheDocument();
+    expect(await screen.findByLabelText('E-post')).toBeInTheDocument();
   });
 
   it('keeps the note open when the session could not be checked', async () => {
@@ -78,7 +78,7 @@ describe('App', () => {
     render(<App sb={fakeSupabase(null, { message: 'Failed to fetch' })} start={fakeStart} />);
     expect(await screen.findByDisplayValue('Grocery List')).toBeInTheDocument();
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(screen.queryByLabelText('Email')).toBeNull();
+    expect(screen.queryByLabelText('E-post')).toBeNull();
     expect(screen.getByDisplayValue('Grocery List')).toBeInTheDocument();
   });
 
@@ -87,6 +87,6 @@ describe('App', () => {
       throw new Error('offline');
     });
     render(<App sb={fakeSupabase({ user: { id: 'u1' } })} start={start} />);
-    expect(await screen.findByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Försök igen' })).toBeInTheDocument();
   });
 });

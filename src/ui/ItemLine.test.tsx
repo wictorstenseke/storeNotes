@@ -19,7 +19,7 @@ function setup(overrides: Partial<ItemLineProps> = {}) {
     ...overrides,
   };
   const view = render(<ItemLine {...props} />);
-  const field = screen.getByRole('textbox', { name: 'Item' }) as HTMLTextAreaElement;
+  const field = screen.getByRole('textbox', { name: 'Vara' }) as HTMLTextAreaElement;
   return { props, field, user: userEvent.setup(), rerender: view.rerender };
 }
 

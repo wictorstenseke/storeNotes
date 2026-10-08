@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { NoteStoreProvider } from './state/context';
+import { byManual } from './domain/sort';
+import { NoteStoreProvider, useNote } from './state/context';
 import { readSetting } from './state/deviceSettings';
 import { startRuntime, type Runtime } from './sync/runtime';
 import { InviteBanner } from './ui/InviteBanner';
@@ -42,6 +43,29 @@ function useSignedIn(sb: SupabaseClient): boolean | undefined {
   return signedIn;
 }
 
+// Read inside the provider, so it can offer the person's own sections to take along.
+function Invites({ runtime }: { runtime: Runtime }) {
+  const sections = useNote((s) => s.sections);
+  const items = useNote((s) => s.items);
+  const keepable = useMemo(
+    () =>
+      [...sections].sort(byManual).map((section) => ({
+        id: section.id,
+        title: section.title,
+        items: items.filter((i) => i.section_id === section.id).length,
+      })),
+    [sections, items],
+  );
+  return (
+    <InviteBanner
+      loadInvites={runtime.loadInvites}
+      sections={keepable}
+      onAccept={(listId, keep) => void runtime.acceptInvite(listId, keep)}
+      onDecline={runtime.declineInvite}
+    />
+  );
+}
+
 function Note({ sb, start }: { sb: SupabaseClient; start: Start }) {
   const [runtime, setRuntime] = useState<Runtime | null>(null);
   const [failed, setFailed] = useState(false);
@@ -72,13 +96,13 @@ function Note({ sb, start }: { sb: SupabaseClient; start: Start }) {
   if (failed) {
     return (
       <main className="mx-auto flex max-w-sm flex-col gap-3 px-6 pt-24">
-        <p className="text-[14px] text-ink-2">Connect to the internet to finish setting up.</p>
+        <p className="text-[14px] text-ink-2">Anslut till internet för att slutföra installationen.</p>
         <button
           type="button"
           className="self-start text-[16px] font-semibold text-notes-ink"
           onClick={() => setAttempt((n) => n + 1)}
         >
-          Try again
+          Försök igen
         </button>
       </main>
     );
@@ -89,11 +113,7 @@ function Note({ sb, start }: { sb: SupabaseClient; start: Start }) {
     <NoteStoreProvider value={runtime.store}>
       <NoteView
         banner={
-          <InviteBanner
-            loadInvites={runtime.loadInvites}
-            onAccept={(listId) => void runtime.acceptInvite(listId)}
-            onDecline={runtime.declineInvite}
-          />
+          <Invites runtime={runtime} />
         }
         header={
           <>

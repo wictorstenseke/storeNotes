@@ -15,7 +15,7 @@ import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { effectiveOrder } from '../domain/learning';
 import { rangeIds, toggleId } from '../domain/selection';
 import { sortDone, sortOpen } from '../domain/sort';
-import { STORES, getStore } from '../domain/stores';
+import { getStore } from '../domain/stores';
 import type { Item, Section } from '../domain/types';
 import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
@@ -52,8 +52,8 @@ function SectionTitle({ title, wantFocus, onFocused, onCommit, onEnter }: TitleP
     <input
       ref={field}
       value={draft}
-      aria-label="Section title"
-      placeholder="Section"
+      aria-label="Sektionens namn"
+      placeholder="Sektion"
       enterKeyHint="next"
       className="min-w-0 flex-1 bg-transparent text-[20px] font-semibold leading-7 caret-notes-ink outline-none placeholder:text-ink-2"
       onChange={(event) => setDraft(event.target.value)}
@@ -277,7 +277,7 @@ export function SectionView({ section }: { section: Section }) {
   });
 
   return (
-    <section className="mt-5" aria-label={section.title || 'Untitled section'}>
+    <section className="mt-5" aria-label={section.title || 'Namnlös sektion'}>
       <div className="flex items-center gap-2 px-4">
         <SectionTitle
           title={section.title}
@@ -296,7 +296,6 @@ export function SectionView({ section }: { section: Section }) {
           storeId={storeId}
           onStoreSort={(on) => note.setStoreSort(section.id, on)}
           onStore={ui.setStoreId}
-          onEditOrder={() => ui.setOrderEditorStore(activeStore?.id ?? STORES[0].id)}
           onDelete={() => note.deleteSection(section.id)}
         />
       </div>
@@ -341,7 +340,7 @@ export function SectionView({ section }: { section: Section }) {
       </div>
       <button
         type="button"
-        aria-label={`Add item to ${section.title || 'section'}`}
+        aria-label={`Lägg till vara i ${section.title || 'sektionen'}`}
         className="block h-9 w-full"
         onClick={() => startLine(null, open.length)}
       />

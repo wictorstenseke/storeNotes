@@ -11,7 +11,6 @@ function setup(storeSort = false, storeId: string | null = null) {
     storeId,
     onStoreSort: vi.fn(),
     onStore: vi.fn(),
-    onEditOrder: vi.fn(),
     onDelete: vi.fn(),
   };
   render(<SectionMenu {...props} />);
@@ -19,20 +18,20 @@ function setup(storeSort = false, storeId: string | null = null) {
 }
 
 const openMenu = (user: ReturnType<typeof userEvent.setup>) =>
-  user.click(screen.getByRole('button', { name: 'Options for Gifts' }));
+  user.click(screen.getByRole('button', { name: 'Alternativ för Gifts' }));
 
 describe('SectionMenu', () => {
   it('turns store sort on', async () => {
     const { props, user } = setup(false);
     await openMenu(user);
-    await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Sort by store' }));
+    await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Sortera efter butik' }));
     expect(props.onStoreSort).toHaveBeenCalledWith(true);
   });
 
   it('turns store sort off', async () => {
     const { props, user } = setup(true);
     await openMenu(user);
-    await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Sort by store' }));
+    await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Sortera efter butik' }));
     expect(props.onStoreSort).toHaveBeenCalledWith(false);
   });
 
@@ -46,7 +45,7 @@ describe('SectionMenu', () => {
   it('reports No store as no store', async () => {
     const { props, user } = setup(true, STORES[0].id);
     await openMenu(user);
-    await user.click(await screen.findByRole('menuitemradio', { name: 'No store' }));
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Ingen butik' }));
     expect(props.onStore).toHaveBeenCalledWith(null);
   });
 
@@ -54,45 +53,31 @@ describe('SectionMenu', () => {
     const { user } = setup(true, STORES[0].id);
     await openMenu(user);
     expect(await screen.findByRole('menuitemradio', { name: STORES[0].name })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByRole('menuitemradio', { name: 'No store' })).toHaveAttribute('aria-checked', 'false');
-  });
-
-  it('opens the store order editor from a section with store sort on', async () => {
-    const { props, user } = setup(true);
-    await openMenu(user);
-    await user.click(await screen.findByRole('menuitem', { name: 'Edit store order' }));
-    expect(props.onEditOrder).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not offer the store order editor when store sort is off', async () => {
-    const { user } = setup(false);
-    await openMenu(user);
-    await screen.findByRole('menuitemcheckbox', { name: 'Sort by store' });
-    expect(screen.queryByRole('menuitem', { name: 'Edit store order' })).toBeNull();
+    expect(screen.getByRole('menuitemradio', { name: 'Ingen butik' })).toHaveAttribute('aria-checked', 'false');
   });
 
   it('offers no stores when store sort is off', async () => {
     const { user } = setup(false);
     await openMenu(user);
-    await screen.findByRole('menuitemcheckbox', { name: 'Sort by store' });
+    await screen.findByRole('menuitemcheckbox', { name: 'Sortera efter butik' });
     expect(screen.queryByRole('menuitemradio')).toBeNull();
   });
 
   it('asks before deleting and deletes on confirm', async () => {
     const { props, user } = setup();
     await openMenu(user);
-    await user.click(await screen.findByRole('menuitem', { name: 'Delete section' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Ta bort sektion' }));
     expect(props.onDelete).not.toHaveBeenCalled();
-    expect(await screen.findByText('Delete this section?')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(await screen.findByText('Ta bort sektionen?')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Ta bort' }));
     expect(props.onDelete).toHaveBeenCalledTimes(1);
   });
 
   it('does not delete on cancel', async () => {
     const { props, user } = setup();
     await openMenu(user);
-    await user.click(await screen.findByRole('menuitem', { name: 'Delete section' }));
-    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Ta bort sektion' }));
+    await user.click(await screen.findByRole('button', { name: 'Avbryt' }));
     expect(props.onDelete).not.toHaveBeenCalled();
   });
 });

@@ -16,7 +16,7 @@ export function DoneGroup({ items, onUncheck, onClear }: Props) {
             type="button"
             role="checkbox"
             aria-checked
-            aria-label={`Uncheck ${item.text}`}
+            aria-label={`Avmarkera ${item.text}`}
             className="flex min-h-9 w-full items-start gap-2.5 px-4 text-left"
             onClick={() => onUncheck(item.id)}
           >
@@ -28,7 +28,7 @@ export function DoneGroup({ items, onUncheck, onClear }: Props) {
         ))}
       </div>
       <button type="button" className="ml-[50px] mt-1 text-[13px] text-notes-ink" onClick={onClear}>
-        Clear done
+        Rensa klara
       </button>
     </div>
   );

@@ -12,7 +12,7 @@ import { StoreOrderList, StoreOrderPanel } from './StoreOrder';
 const labels = () =>
   screen.getAllByRole('listitem').map((row) => within(row).getByTestId('category-label').textContent);
 const handle = (category: Category) =>
-  screen.getByRole('button', { name: `Move ${CATEGORY_LABELS[category].name}` });
+  screen.getByRole('button', { name: `Flytta ${CATEGORY_LABELS[category].name}` });
 
 describe('StoreOrderList', () => {
   const ORDER: Category[] = ['produce', 'bakery', 'dairy'];
@@ -105,7 +105,7 @@ describe('StoreOrderPanel', () => {
     const { scores, user } = await setup();
     handle(FIRST.baseline[0]).focus();
     await user.keyboard('{ArrowDown}');
-    await user.click(screen.getByRole('button', { name: 'Reset to original order' }));
+    await user.click(screen.getByRole('button', { name: 'Återställ ursprunglig ordning' }));
     expect(labels()).toEqual(names(FIRST.baseline));
     expect(effectiveOrder(FIRST.baseline, scores(FIRST.id))).toEqual(FIRST.baseline);
   });

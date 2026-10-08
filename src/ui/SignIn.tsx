@@ -21,17 +21,17 @@ const BUTTON = 'self-start text-[16px] font-semibold text-notes-ink disabled:opa
 
 function signInError(message: string): string {
   if (/not confirmed/i.test(message)) {
-    return 'Confirm your email first. Open the link we sent you, then sign in.';
+    return 'Bekräfta din e-post först. Öppna länken vi skickade och logga sedan in.';
   }
-  if (/invalid login/i.test(message)) return 'Wrong email or password.';
-  return 'Could not sign in. Check your connection and try again.';
+  if (/invalid login/i.test(message)) return 'Fel e-post eller lösenord.';
+  return 'Kunde inte logga in. Kontrollera anslutningen och försök igen.';
 }
 
 function signUpError(message: string): string {
   if (/rate limit|security purposes/i.test(message)) {
-    return 'Too many attempts. Wait a minute and try again.';
+    return 'För många försök. Vänta en minut och försök igen.';
   }
-  return 'Could not create the account. Check your connection and try again.';
+  return 'Kunde inte skapa kontot. Kontrollera anslutningen och försök igen.';
 }
 
 export function SignIn({ auth }: { auth: AuthApi }) {
@@ -47,15 +47,15 @@ export function SignIn({ auth }: { auth: AuthApi }) {
     setNotice(null);
     const address = normalizeEmail(email);
     if (!address) {
-      setError('Enter a valid email address.');
+      setError('Ange en giltig e-postadress.');
       return;
     }
     if (creating && password.length < MIN_PASSWORD) {
-      setError(`Use at least ${MIN_PASSWORD} characters for the password.`);
+      setError(`Använd minst ${MIN_PASSWORD} tecken i lösenordet.`);
       return;
     }
     if (!creating && password === '') {
-      setError('Enter your password.');
+      setError('Ange ditt lösenord.');
       return;
     }
 
@@ -69,7 +69,7 @@ export function SignIn({ auth }: { auth: AuthApi }) {
       }
       setError(null);
       if (result.needsConfirmation) {
-        setNotice(`We sent a confirmation link to ${address}. Open it, then sign in here.`);
+        setNotice(`Vi har skickat en bekräftelselänk till ${address}. Öppna den och logga sedan in här.`);
         setCreating(false);
       }
       return;
@@ -91,7 +91,7 @@ export function SignIn({ auth }: { auth: AuthApi }) {
       <h1 className="text-[20px] font-semibold">storeNotes</h1>
       <form className="flex flex-col gap-4" onSubmit={submit} noValidate>
         <label className="flex flex-col gap-1 text-[13px] text-ink-2">
-          Email
+          E-post
           <input
             className={FIELD}
             type="email"
@@ -103,7 +103,7 @@ export function SignIn({ auth }: { auth: AuthApi }) {
           />
         </label>
         <label className="flex flex-col gap-1 text-[13px] text-ink-2">
-          Password
+          Lösenord
           <input
             className={FIELD}
             type="password"
@@ -113,7 +113,7 @@ export function SignIn({ auth }: { auth: AuthApi }) {
           />
         </label>
         <button type="submit" className={BUTTON} disabled={busy}>
-          {creating ? 'Create account' : 'Sign in'}
+          {creating ? 'Skapa konto' : 'Logga in'}
         </button>
       </form>
       {notice && (
@@ -127,7 +127,7 @@ export function SignIn({ auth }: { auth: AuthApi }) {
         </p>
       )}
       <button type="button" className="self-start text-[13px] text-ink-2" onClick={switchMode}>
-        {creating ? 'I already have an account' : 'Create an account'}
+        {creating ? 'Jag har redan ett konto' : 'Skapa ett konto'}
       </button>
     </main>
   );

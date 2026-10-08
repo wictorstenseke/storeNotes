@@ -36,7 +36,7 @@ function OrderRow({ category, index, onMove }: RowProps) {
         type="button"
         {...attributes}
         {...listeners}
-        aria-label={`Move ${label.name}`}
+        aria-label={`Flytta ${label.name}`}
         data-handle={category}
         className="grid size-9 shrink-0 cursor-grab touch-none place-items-center text-[18px] leading-none text-ink-2"
         onKeyDown={(event) => {
@@ -115,7 +115,7 @@ export function StoreOrderPanel({ storeId, onStore }: PanelProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div role="group" aria-label="Store" className="flex gap-4 px-4 pb-2 text-[14px]">
+      <div role="group" aria-label="Butik" className="flex gap-4 px-4 pb-2 text-[14px]">
         {STORES.map((option) => (
           <button
             key={option.id}
@@ -136,7 +136,7 @@ export function StoreOrderPanel({ storeId, onStore }: PanelProps) {
         className="self-start px-4 py-3 text-[14px] text-notes-ink"
         onClick={() => note.resetStoreOrder(store.id)}
       >
-        Reset to original order
+        Återställ ursprunglig ordning
       </button>
     </div>
   );
@@ -159,9 +159,9 @@ export function StoreOrderSheet() {
         className="gap-0 rounded-t-2xl data-[side=bottom]:mx-auto data-[side=bottom]:h-[88dvh] data-[side=bottom]:max-w-xl"
       >
         <SheetHeader>
-          <SheetTitle className="text-[20px] font-semibold">Store order</SheetTitle>
+          <SheetTitle className="text-[20px] font-semibold">Butikens ordning</SheetTitle>
           <SheetDescription className="text-[13px] text-ink-2">
-            Drag the sections into the order you walk past them. Saved as you go.
+            Dra avdelningarna i den ordning du går förbi dem. Sparas direkt.
           </SheetDescription>
         </SheetHeader>
         {editing !== null && <StoreOrderPanel storeId={editing} onStore={setOrderEditorStore} />}

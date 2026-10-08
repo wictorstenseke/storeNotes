@@ -29,7 +29,7 @@ async function setup(sectionTitles = ['Grocery List', 'Gifts']) {
   return { store, sectionIds, textsIn, user: userEvent.setup(), container: view.container };
 }
 
-const field = () => screen.getByRole('textbox', { name: 'Add item' }) as HTMLTextAreaElement;
+const field = () => screen.getByRole('textbox', { name: 'Lägg till vara' }) as HTMLTextAreaElement;
 
 describe('QuickAddBar', () => {
   it('adds on Enter, clears the field and keeps focus', async () => {
@@ -59,15 +59,15 @@ describe('QuickAddBar', () => {
   it('adds with the + button and keeps focus in the field', async () => {
     const { textsIn, sectionIds, user } = await setup();
     await user.type(field(), 'Milk');
-    await user.click(screen.getByRole('button', { name: 'Add' }));
+    await user.click(screen.getByRole('button', { name: 'Lägg till' }));
     expect(textsIn(sectionIds[0])).toEqual(['Milk']);
     expect(document.activeElement).toBe(field());
   });
 
-  it('has a button that says Add, dimmed until there is something to add', async () => {
+  it('has a button that says Lägg till, dimmed until there is something to add', async () => {
     const { user } = await setup();
-    const add = screen.getByRole('button', { name: 'Add' });
-    expect(add).toHaveTextContent('Add');
+    const add = screen.getByRole('button', { name: 'Lägg till' });
+    expect(add).toHaveTextContent('Lägg till');
     expect(add).toHaveAttribute('aria-disabled', 'true');
     await user.type(field(), 'Milk');
     expect(add).toHaveAttribute('aria-disabled', 'false');
@@ -78,7 +78,7 @@ describe('QuickAddBar', () => {
 
   it('switches target section with the chip and remembers the last one used', async () => {
     const { textsIn, sectionIds, user } = await setup();
-    const chip = () => screen.getByRole('button', { name: /^Adding to/ });
+    const chip = () => screen.getByRole('button', { name: /^Lägger till i/ });
     expect(chip()).toHaveTextContent('Grocery List');
     await user.click(chip());
     expect(chip()).toHaveTextContent('Gifts');

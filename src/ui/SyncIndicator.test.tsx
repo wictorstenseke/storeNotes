@@ -21,12 +21,12 @@ describe('SyncIndicator', () => {
   it('says changes will sync when offline with changes waiting', () => {
     useSyncStatus.setState({ pending: 2, online: false });
     render(<SyncIndicator />);
-    expect(screen.getByRole('status')).toHaveTextContent('Offline — changes will sync');
+    expect(screen.getByRole('status')).toHaveTextContent('Offline – ändringar synkas senare');
   });
 
   it('shows a notice', () => {
     render(<SyncIndicator />);
-    act(() => useSyncStatus.setState({ notice: 'A change could not be saved.' }));
-    expect(screen.getByRole('status')).toHaveTextContent('A change could not be saved.');
+    act(() => useSyncStatus.setState({ notice: 'En ändring kunde inte sparas.' }));
+    expect(screen.getByRole('status')).toHaveTextContent('En ändring kunde inte sparas.');
   });
 });

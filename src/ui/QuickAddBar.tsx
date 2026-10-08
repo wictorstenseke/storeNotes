@@ -16,7 +16,7 @@ export function QuickAddBar() {
   const sorted = useMemo(() => [...sections].sort(byManual), [sections]);
   const target = sorted.find((s) => s.id === chosen) ?? sorted[0];
   if (!target) return null;
-  const name = target.title || 'Untitled';
+  const name = target.title || 'Namnlös';
 
   const submit = () => {
     const parts = parseQuickAdd(text);
@@ -39,7 +39,7 @@ export function QuickAddBar() {
 
   return (
     <div
-      className="fixed inset-x-0 z-10 bg-page"
+      className="fixed inset-x-0 z-10 border-t border-line bg-page shadow-[0_-4px_16px_rgba(0,0,0,0.12)]"
       style={{ bottom: inset, paddingBottom: inset > 0 ? 0 : 'env(safe-area-inset-bottom)' }}
     >
       <form
@@ -52,7 +52,7 @@ export function QuickAddBar() {
         {/* Which section the next item goes to. Tap to switch. */}
         <button
           type="button"
-          aria-label={`Adding to ${name}. Tap to change section`}
+          aria-label={`Lägger till i ${name}. Tryck för att byta sektion`}
           className="max-w-full self-start truncate px-3.5 text-[13px] font-semibold text-notes-ink"
           onClick={nextSection}
           {...keepFocus}
@@ -68,8 +68,8 @@ export function QuickAddBar() {
               ref={field}
               rows={1}
               value={text}
-              aria-label="Add item"
-              placeholder="Add item"
+              aria-label="Lägg till vara"
+              placeholder="Lägg till vara"
               enterKeyHint="done"
               autoCapitalize="sentences"
               className="min-w-0 flex-1 resize-none bg-transparent text-[16px] leading-[22px] caret-notes-ink outline-none placeholder:text-ink-2"
@@ -90,7 +90,7 @@ export function QuickAddBar() {
             }`}
             {...keepFocus}
           >
-            Add
+            Lägg till
           </button>
         </div>
       </form>

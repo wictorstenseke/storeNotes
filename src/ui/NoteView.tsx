@@ -28,7 +28,7 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
         className="mx-4 mt-6 self-start text-[14px] text-notes-ink"
         onClick={addSection}
       >
-        + New section
+        + Ny sektion
       </button>
       <QuickAddBar />
       <StoreOrderSheet />

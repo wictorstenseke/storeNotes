@@ -12,6 +12,7 @@ function setup(inviteResult = true) {
       return inviteResult;
     }),
     onSignOut: vi.fn(),
+    onEditOrder: vi.fn(),
   };
   render(<SettingsPanel {...props} />);
   return { props, user: userEvent.setup() };
@@ -25,29 +26,35 @@ describe('SettingsPanel', () => {
 
   it('invites a normalised email and shows it as pending', async () => {
     const { props, user } = setup();
-    await user.type(screen.getByLabelText('Share with'), ' Bo@Example.com{Enter}');
+    await user.type(screen.getByLabelText('Dela med'), ' Bo@Example.com{Enter}');
     expect(props.invite).toHaveBeenCalledWith('bo@example.com');
     expect(await screen.findByText('bo@example.com')).toBeInTheDocument();
-    expect(screen.getByText('Invited')).toBeInTheDocument();
-    expect(screen.getByLabelText('Share with')).toHaveValue('');
+    expect(screen.getByText('Inbjuden')).toBeInTheDocument();
+    expect(screen.getByLabelText('Dela med')).toHaveValue('');
   });
 
   it('rejects an invalid email', async () => {
     const { props, user } = setup();
-    await user.type(screen.getByLabelText('Share with'), 'bo{Enter}');
-    expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid email address.');
+    await user.type(screen.getByLabelText('Dela med'), 'bo{Enter}');
+    expect(screen.getByRole('alert')).toHaveTextContent('Ange en giltig e-postadress.');
     expect(props.invite).not.toHaveBeenCalled();
   });
 
   it('explains a failed invite', async () => {
     const { user } = setup(false);
-    await user.type(screen.getByLabelText('Share with'), 'bo@example.com{Enter}');
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not save the invite.');
+    await user.type(screen.getByLabelText('Dela med'), 'bo@example.com{Enter}');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Kunde inte spara inbjudan.');
+  });
+
+  it('opens the order editor', async () => {
+    const { props, user } = setup();
+    await user.click(screen.getByRole('button', { name: 'Editera ordningen' }));
+    expect(props.onEditOrder).toHaveBeenCalledTimes(1);
   });
 
   it('signs out', async () => {
     const { props, user } = setup();
-    await user.click(screen.getByRole('button', { name: 'Sign out' }));
+    await user.click(screen.getByRole('button', { name: 'Logga ut' }));
     expect(props.onSignOut).toHaveBeenCalledTimes(1);
   });
 });

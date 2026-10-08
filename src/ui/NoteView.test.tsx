@@ -9,6 +9,7 @@ import type { NoteActions, NoteState } from '../state/noteStore';
 import { useUi } from '../state/uiStore';
 import { makeStore } from '../test/helpers';
 import { NoteView } from './NoteView';
+import { SettingsSheet } from './SettingsSheet';
 
 beforeEach(() => {
   useUi.setState({
@@ -21,14 +22,23 @@ beforeEach(() => {
   });
 });
 
-async function setup(seed?: (note: NoteState & NoteActions, sectionId: string) => void) {
+async function setup(
+  seed?: (note: NoteState & NoteActions, sectionId: string) => void,
+  withSettings = false,
+) {
   const { store } = await makeStore();
   const sectionId = store.getState().addSection('Grocery List');
   store.getState().setStoreSort(sectionId, true);
   seed?.(store.getState(), sectionId);
   render(
     <NoteStoreProvider value={store}>
-      <NoteView />
+      <NoteView
+        header={
+          withSettings ? (
+            <SettingsSheet loadPeople={async () => []} invite={async () => true} onSignOut={() => {}} />
+          ) : undefined
+        }
+      />
     </NoteStoreProvider>,
   );
   return { store, sectionId, user: userEvent.setup() };
@@ -36,12 +46,12 @@ async function setup(seed?: (note: NoteState & NoteActions, sectionId: string) =
 
 // The store is chosen in the section's ⋯ menu.
 async function chooseStore(user: ReturnType<typeof userEvent.setup>, name: string, section = 'Grocery List') {
-  await user.click(screen.getByRole('button', { name: `Options for ${section}` }));
+  await user.click(screen.getByRole('button', { name: `Alternativ för ${section}` }));
   await user.click(await screen.findByRole('menuitemradio', { name }));
   await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
 }
 
-const fields = () => screen.queryAllByRole('textbox', { name: 'Item' }) as HTMLTextAreaElement[];
+const fields = () => screen.queryAllByRole('textbox', { name: 'Vara' }) as HTMLTextAreaElement[];
 const lines = () => fields().map((el) => el.value);
 const seedAC = (note: NoteState & NoteActions, sectionId: string) => {
   note.addItems(sectionId, ['A', 'C']);
@@ -75,14 +85,14 @@ describe('editing', () => {
   it('removes an empty line when it loses focus', async () => {
     const { store, user } = await setup(seedAC);
     await user.type(fields()[0], '{Enter}');
-    await user.click(screen.getByRole('textbox', { name: 'Section title' }));
+    await user.click(screen.getByRole('textbox', { name: 'Sektionens namn' }));
     expect(lines()).toEqual(['A', 'C']);
     expect(store.getState().items).toHaveLength(2);
   });
 
   it('starts a new line at the end when the space under the list is tapped', async () => {
     const { store, user } = await setup(seedAC);
-    await user.click(screen.getByRole('button', { name: 'Add item to Grocery List' }));
+    await user.click(screen.getByRole('button', { name: 'Lägg till vara i Grocery List' }));
     expect(document.activeElement).toBe(fields()[2]);
     await user.keyboard('Z');
     await user.tab();
@@ -101,19 +111,19 @@ describe('editing', () => {
 describe('checking off', () => {
   it('moves a checked item to Done and back when the Done item is tapped', async () => {
     const { user } = await setup(seedAC);
-    await user.click(screen.getByRole('checkbox', { name: 'Check A' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
     expect(lines()).toEqual(['C']);
-    await user.click(screen.getByRole('checkbox', { name: 'Uncheck A' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Avmarkera A' }));
     expect(lines()).toEqual(['A', 'C']);
-    expect(screen.queryByRole('checkbox', { name: 'Uncheck A' })).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: 'Avmarkera A' })).toBeNull();
   });
 
   it('clears Done items', async () => {
     const { store, user } = await setup(seedAC);
-    await user.click(screen.getByRole('checkbox', { name: 'Check A' }));
-    await user.click(screen.getByRole('button', { name: 'Clear done' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
+    await user.click(screen.getByRole('button', { name: 'Rensa klara' }));
     expect(store.getState().items.map((i) => i.text)).toEqual(['C']);
-    expect(screen.queryByRole('button', { name: 'Clear done' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Rensa klara' })).toBeNull();
   });
 });
 
@@ -147,7 +157,7 @@ describe('store order', () => {
     expect(lines()).toEqual(['New', ...inStoreOrder]);
     // The chosen store is named beside the menu button, since the menu is closed.
     expect(within(grocery).getByText(STORE.name)).toBeInTheDocument();
-    await chooseStore(user, 'No store');
+    await chooseStore(user, 'Ingen butik');
     expect(lines()).toEqual(['Ice', 'Milk', 'New', 'Apple']);
     expect(within(grocery).queryByText(STORE.name)).toBeNull();
   });
@@ -155,7 +165,7 @@ describe('store order', () => {
   it('records the chosen store on a checked item', async () => {
     const { store, user } = await setup(seedTagged);
     await chooseStore(user, STORE.name);
-    await user.click(screen.getByRole('checkbox', { name: 'Check Milk' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Markera Milk' }));
     expect(store.getState().items.find((i) => i.text === 'Milk')?.checked_store).toBe(STORE.id);
   });
 
@@ -164,30 +174,30 @@ describe('store order', () => {
     act(() => {
       store.getState().addSection('Gifts');
     });
-    await user.click(screen.getByRole('button', { name: 'Options for Gifts' }));
-    await screen.findByRole('menuitemcheckbox', { name: 'Sort by store' });
+    await user.click(screen.getByRole('button', { name: 'Alternativ för Gifts' }));
+    await screen.findByRole('menuitemcheckbox', { name: 'Sortera efter butik' });
     expect(screen.queryByRole('menuitemradio')).toBeNull();
     await user.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
 
-    await user.click(screen.getByRole('button', { name: 'Options for Grocery List' }));
+    await user.click(screen.getByRole('button', { name: 'Alternativ för Grocery List' }));
     expect(await screen.findByRole('menuitemradio', { name: STORE_NAMES[0] })).toBeInTheDocument();
     expect(screen.getByRole('menuitemradio', { name: STORE_NAMES[1] })).toBeInTheDocument();
-    expect(screen.getByRole('menuitemradio', { name: 'No store' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitemradio', { name: 'Ingen butik' })).toBeInTheDocument();
   });
 
   it('has no row of store buttons under the section title', async () => {
     await setup(seedAC);
-    expect(screen.queryByRole('group', { name: 'Store' })).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Butik' })).toBeNull();
   });
 });
 
 describe('sections', () => {
   it('adds a section and focuses its title', async () => {
     const { store, user } = await setup();
-    await user.click(screen.getByRole('button', { name: '+ New section' }));
+    await user.click(screen.getByRole('button', { name: '+ Ny sektion' }));
     expect(store.getState().sections).toHaveLength(2);
-    const titles = screen.getAllByRole('textbox', { name: 'Section title' });
+    const titles = screen.getAllByRole('textbox', { name: 'Sektionens namn' });
     expect(document.activeElement).toBe(titles[1]);
     await user.keyboard('Gifts');
     await user.tab();
@@ -328,19 +338,19 @@ describe('selecting several items', () => {
 
 describe('editing the store order', () => {
   const openEditor = async (user: ReturnType<typeof userEvent.setup>) => {
-    await user.click(screen.getByRole('button', { name: 'Options for Grocery List' }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Edit store order' }));
-    return screen.findByRole('dialog', { name: 'Store order' });
+    await user.click(screen.getByRole('button', { name: 'Inställningar' }));
+    await user.click(await screen.findByRole('button', { name: 'Editera ordningen' }));
+    return screen.findByRole('dialog', { name: 'Butikens ordning' });
   };
 
   it('opens for the first store when no store is chosen', async () => {
-    const { user } = await setup(seedAC);
+    const { user } = await setup(seedAC, true);
     const dialog = await openEditor(user);
     expect(within(dialog).getByRole('button', { name: STORES[0].name })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('opens for the store that is chosen', async () => {
-    const { user } = await setup(seedAC);
+    const { user } = await setup(seedAC, true);
     await chooseStore(user, STORES[1].name);
     const dialog = await openEditor(user);
     expect(within(dialog).getByRole('button', { name: STORES[1].name })).toHaveAttribute('aria-pressed', 'true');

@@ -16,7 +16,7 @@ function loadPreviewStore(): Promise<NoteStore> {
     const store = createNoteStore({ db, outbox: new Outbox(db) });
     await store.getState().load('preview');
     if (store.getState().sections.length === 0) {
-      const id = store.getState().addSection('Grocery List');
+      const id = store.getState().addSection('Inköpslista');
       store.getState().setStoreSort(id, true);
     }
     return store;

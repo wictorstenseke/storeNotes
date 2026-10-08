@@ -10,6 +10,7 @@ import { LocalDb } from './localDb';
 import { Outbox } from './outbox';
 import { supabaseRemote } from './supabaseRemote';
 import { SyncEngine } from './syncEngine';
+import { moveSectionsTo } from './transfer';
 
 export type Runtime = {
   store: NoteStore;
@@ -19,7 +20,7 @@ export type Runtime = {
   loadPeople(): Promise<Person[]>;
   invite(email: string): Promise<boolean>;
   loadInvites(): Promise<Invite[]>;
-  acceptInvite(listId: string): Promise<void>;
+  acceptInvite(listId: string, keep: string[]): Promise<void>;
   declineInvite(listId: string): Promise<boolean>;
 };
 
@@ -31,7 +32,7 @@ export async function startRuntime(sb: SupabaseClient): Promise<Runtime> {
   let listId = readSetting('listId');
   if (!listId) {
     const { data, error } = await sb.rpc('bootstrap');
-    if (error || typeof data !== 'string') throw new Error('Could not set up the list');
+    if (error || typeof data !== 'string') throw new Error('Kunde inte skapa listan');
     listId = data;
     writeSetting('listId', listId);
   }
@@ -63,7 +64,7 @@ export async function startRuntime(sb: SupabaseClient): Promise<Runtime> {
   engine = new SyncEngine(db, outbox, supabaseRemote(sb), id, {
     // Changes from the other device can include untagged items.
     onChange: () => void store.getState().reload().then(() => categorizer?.run()),
-    onRejected: () => showNotice('A change could not be saved.'),
+    onRejected: () => showNotice('En ändring kunde inte sparas.'),
     onStatus: (pending) => useSyncStatus.setState({ pending }),
   });
   const stopEngine = engine.start();
@@ -108,17 +109,33 @@ export async function startRuntime(sb: SupabaseClient): Promise<Runtime> {
       return (data ?? []) as Invite[];
     },
     // Only ever called from the Join button. Switches this device to the
-    // shared list: send what is still queued, join, then start over from the
-    // server copy of the new list.
-    acceptInvite: async (target) => {
+    // shared list: send what is still queued, join, move the chosen
+    // sections over, then start over from the server copy of the new list.
+    acceptInvite: async (target, keep) => {
       await engine?.flush();
       const { error } = await sb.rpc('accept_invite', { l: target });
       if (error) {
-        showNotice('Could not join the list. Check your connection and try again.');
+        showNotice('Kunde inte gå med i listan. Kontrollera anslutningen och försök igen.');
         return;
       }
       stop();
-      await db.delete();
+      // Take the chosen sections along. They are queued for sending, so a
+      // bad connection only delays them. If the last position cannot be read
+      // they are added anyway; equal positions are sorted by id.
+      let last: string | null = null;
+      try {
+        const { data } = await sb
+          .from('sections')
+          .select('position')
+          .eq('list_id', target)
+          .is('deleted_at', null)
+          .order('position', { ascending: false })
+          .limit(1);
+        last = (data?.[0] as { position: string } | undefined)?.position ?? null;
+      } catch {
+        // keep null
+      }
+      await moveSectionsTo(db, outbox, id, target, keep, last);
       writeSetting('listId', target);
       window.location.reload();
     },

@@ -27,7 +27,6 @@ type Props = {
   storeId: string | null;
   onStoreSort(on: boolean): void;
   onStore(id: string | null): void;
-  onEditOrder(): void;
   onDelete(): void;
 };
 
@@ -39,7 +38,6 @@ export function SectionMenu({
   storeId,
   onStoreSort,
   onStore,
-  onEditOrder,
   onDelete,
 }: Props) {
   const [confirming, setConfirming] = useState(false);
@@ -48,7 +46,7 @@ export function SectionMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          aria-label={`Options for ${title || 'section'}`}
+          aria-label={`Alternativ för ${title || 'sektion'}`}
           className="shrink-0 px-1 text-[18px] leading-none text-ink-2"
         >
           ⋯
@@ -61,7 +59,7 @@ export function SectionMenu({
                 onValueChange={(value) => onStore(value === NO_STORE ? null : String(value))}
               >
                 <DropdownMenuRadioItem value={NO_STORE} closeOnClick>
-                  No store
+                  Ingen butik
                 </DropdownMenuRadioItem>
                 {STORES.map((store) => (
                   <DropdownMenuRadioItem key={store.id} value={store.id} closeOnClick>
@@ -69,7 +67,6 @@ export function SectionMenu({
                   </DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>
-              <DropdownMenuItem onClick={onEditOrder}>Edit store order</DropdownMenuItem>
               <DropdownMenuSeparator />
             </>
           )}
@@ -77,26 +74,26 @@ export function SectionMenu({
             checked={storeSort}
             onCheckedChange={(checked) => onStoreSort(checked === true)}
           >
-            Sort by store
+            Sortera efter butik
           </DropdownMenuCheckboxItem>
-          <DropdownMenuItem onClick={() => setConfirming(true)}>Delete section</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setConfirming(true)}>Ta bort sektion</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this section?</AlertDialogTitle>
-            <AlertDialogDescription>Its items are deleted too.</AlertDialogDescription>
+            <AlertDialogTitle>Ta bort sektionen?</AlertDialogTitle>
+            <AlertDialogDescription>Alla varor i den tas också bort.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 setConfirming(false);
                 onDelete();
               }}
             >
-              Delete
+              Ta bort
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

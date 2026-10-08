@@ -9,6 +9,6 @@ it('shows the note with exactly one grocery section, also under StrictMode', asy
       <Preview />
     </StrictMode>,
   );
-  expect(await screen.findByDisplayValue('Grocery List')).toBeInTheDocument();
-  expect(screen.getAllByRole('textbox', { name: 'Section title' })).toHaveLength(1);
+  expect(await screen.findByDisplayValue('Inköpslista')).toBeInTheDocument();
+  expect(screen.getAllByRole('textbox', { name: 'Sektionens namn' })).toHaveLength(1);
 });

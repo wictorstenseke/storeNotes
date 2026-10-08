@@ -90,7 +90,7 @@ export function ItemLine(props: ItemLineProps) {
         type="button"
         role="checkbox"
         aria-checked={false}
-        aria-label={`Check ${item.text}`}
+        aria-label={`Markera ${item.text}`}
         className="mt-[7px] size-[22px] shrink-0 rounded-full border-[1.5px] border-line"
         onClick={(event) => {
           event.stopPropagation();
@@ -101,7 +101,7 @@ export function ItemLine(props: ItemLineProps) {
         ref={field}
         rows={1}
         value={draft}
-        aria-label="Item"
+        aria-label="Vara"
         autoCapitalize="sentences"
         enterKeyHint="next"
         className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-[7px] text-[16px] leading-[22px] caret-notes-ink outline-none"

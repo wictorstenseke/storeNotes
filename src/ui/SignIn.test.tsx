@@ -13,8 +13,8 @@ function setup(overrides: Partial<AuthApi> = {}) {
   return { auth, user: userEvent.setup() };
 }
 
-const email = () => screen.getByLabelText('Email');
-const password = () => screen.getByLabelText('Password');
+const email = () => screen.getByLabelText('E-post');
+const password = () => screen.getByLabelText('Lösenord');
 
 describe('signing in', () => {
   it('signs in with the normalised email and the password', async () => {
@@ -29,14 +29,14 @@ describe('signing in', () => {
     const { auth, user } = setup();
     await user.type(email(), 'anna');
     await user.type(password(), 'correct horse{Enter}');
-    expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid email address.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Ange en giltig e-postadress.');
     expect(auth.signIn).not.toHaveBeenCalled();
   });
 
   it('asks for the password when it is missing', async () => {
     const { auth, user } = setup();
     await user.type(email(), 'anna@example.com{Enter}');
-    expect(screen.getByRole('alert')).toHaveTextContent('Enter your password.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Ange ditt lösenord.');
     expect(auth.signIn).not.toHaveBeenCalled();
   });
 
@@ -44,27 +44,27 @@ describe('signing in', () => {
     const { user } = setup({ signIn: vi.fn(async () => ({ error: { message: 'Invalid login credentials' } })) });
     await user.type(email(), 'anna@example.com');
     await user.type(password(), 'wrong password{Enter}');
-    expect(await screen.findByRole('alert')).toHaveTextContent('Wrong email or password.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Fel e-post eller lösenord.');
   });
 
   it('explains an email that has not been confirmed', async () => {
     const { user } = setup({ signIn: vi.fn(async () => ({ error: { message: 'Email not confirmed' } })) });
     await user.type(email(), 'anna@example.com');
     await user.type(password(), 'correct horse{Enter}');
-    expect(await screen.findByRole('alert')).toHaveTextContent('Confirm your email first.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Bekräfta din e-post först.');
   });
 
   it('explains a failure to reach the server', async () => {
     const { user } = setup({ signIn: vi.fn(async () => ({ error: { message: 'Failed to fetch' } })) });
     await user.type(email(), 'anna@example.com');
     await user.type(password(), 'correct horse{Enter}');
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not sign in.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Kunde inte logga in.');
   });
 });
 
 describe('creating an account', () => {
   const openSignUp = (user: ReturnType<typeof userEvent.setup>) =>
-    user.click(screen.getByRole('button', { name: 'Create an account' }));
+    user.click(screen.getByRole('button', { name: 'Skapa ett konto' }));
 
   it('creates the account and says to confirm by email, then offers sign-in', async () => {
     const { auth, user } = setup();
@@ -72,8 +72,8 @@ describe('creating an account', () => {
     await user.type(email(), 'Anna@Example.com');
     await user.type(password(), 'correct horse{Enter}');
     expect(auth.signUp).toHaveBeenCalledWith({ email: 'anna@example.com', password: 'correct horse' });
-    expect(await screen.findByRole('status')).toHaveTextContent('We sent a confirmation link to anna@example.com.');
-    expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+    expect(await screen.findByRole('status')).toHaveTextContent('Vi har skickat en bekräftelselänk till anna@example.com.');
+    expect(screen.getByRole('button', { name: 'Logga in' })).toBeInTheDocument();
     expect(auth.signIn).not.toHaveBeenCalled();
   });
 
@@ -82,7 +82,7 @@ describe('creating an account', () => {
     await openSignUp(user);
     await user.type(email(), 'anna@example.com');
     await user.type(password(), 'short{Enter}');
-    expect(screen.getByRole('alert')).toHaveTextContent('Use at least 8 characters for the password.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Använd minst 8 tecken i lösenordet.');
     expect(auth.signUp).not.toHaveBeenCalled();
   });
 
@@ -101,7 +101,7 @@ describe('creating an account', () => {
     await openSignUp(user);
     await user.type(email(), 'anna@example.com');
     await user.type(password(), 'correct horse{Enter}');
-    expect(await screen.findByRole('alert')).toHaveTextContent('Too many attempts.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('För många försök.');
   });
 
   it('explains any other failure', async () => {
@@ -111,14 +111,14 @@ describe('creating an account', () => {
     await openSignUp(user);
     await user.type(email(), 'anna@example.com');
     await user.type(password(), 'correct horse{Enter}');
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not create the account.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Kunde inte skapa kontot.');
   });
 
   it('goes back to signing in', async () => {
     const { user } = setup();
     await openSignUp(user);
-    expect(screen.getByRole('button', { name: 'Create account' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'I already have an account' }));
-    expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Skapa konto' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Jag har redan ett konto' }));
+    expect(screen.getByRole('button', { name: 'Logga in' })).toBeInTheDocument();
   });
 });
