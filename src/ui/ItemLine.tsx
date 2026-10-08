@@ -10,6 +10,7 @@ export type ItemLineProps = {
   onEnter(text: string): void;
   onBackspaceEmpty(): void;
   onArrow(dir: -1 | 1): void;
+  onExtend(dir: -1 | 1): void; // Shift+arrow: start selecting lines from this one
   onToggle(): void;
 };
 
@@ -50,6 +51,11 @@ export function ItemLine(props: ItemLineProps) {
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.nativeEvent.isComposing) return;
     const el = event.currentTarget;
+    if (event.shiftKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+      event.preventDefault();
+      props.onExtend(event.key === 'ArrowDown' ? 1 : -1);
+      return;
+    }
     if (event.key === 'Enter') {
       event.preventDefault();
       props.onEnter(draft);
@@ -74,7 +80,11 @@ export function ItemLine(props: ItemLineProps) {
     <div
       className="flex min-h-9 items-start gap-2.5 px-4"
       data-item-id={item.id}
-      onClick={() => field.current?.focus()}
+      onClick={(event) => {
+        // Shift- and Cmd-click select lines; they must not start editing one.
+        if (event.shiftKey || event.metaKey || event.ctrlKey) return;
+        field.current?.focus();
+      }}
     >
       <button
         type="button"

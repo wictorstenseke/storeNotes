@@ -14,6 +14,7 @@ function setup(overrides: Partial<ItemLineProps> = {}) {
     onEnter: vi.fn(),
     onBackspaceEmpty: vi.fn(),
     onArrow: vi.fn(),
+    onExtend: vi.fn(),
     onToggle: vi.fn(),
     ...overrides,
   };
@@ -93,6 +94,16 @@ describe('ItemLine', () => {
     field.setSelectionRange(0, 0);
     await user.keyboard('{ArrowUp}');
     expect(props.onArrow).toHaveBeenCalledWith(-1);
+  });
+
+  it('reports Shift+arrow as extending a selection, not as moving between lines', async () => {
+    const { field, props, user } = setup();
+    await user.click(field);
+    await user.keyboard('{Shift>}{ArrowDown}{/Shift}');
+    expect(props.onExtend).toHaveBeenCalledWith(1);
+    await user.keyboard('{Shift>}{ArrowUp}{/Shift}');
+    expect(props.onExtend).toHaveBeenCalledWith(-1);
+    expect(props.onArrow).not.toHaveBeenCalled();
   });
 
   it('commits the text and then toggles when the checkbox is tapped while editing', async () => {

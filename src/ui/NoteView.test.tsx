@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Category } from '../domain/categories';
@@ -11,7 +11,7 @@ import { makeStore } from '../test/helpers';
 import { NoteView } from './NoteView';
 
 beforeEach(() => {
-  useUi.setState({ focusId: null, hold: null, storeId: null, quickAddSectionId: null });
+  useUi.setState({ focusId: null, hold: null, storeId: null, quickAddSectionId: null, selection: null });
 });
 
 async function setup(seed?: (note: NoteState & NoteActions, sectionId: string) => void) {
@@ -196,5 +196,125 @@ describe('reordering', () => {
     expect(rows().every((row) => row.getAttribute('data-draggable') === 'true')).toBe(true);
     await chooseStore(user, STORES[0].name);
     expect(rows().every((row) => row.getAttribute('data-draggable') === 'false')).toBe(true);
+  });
+});
+
+describe('selecting several items', () => {
+  const seedABCD = (note: NoteState & NoteActions, sectionId: string) => {
+    note.addItems(sectionId, ['A', 'B', 'C', 'D']);
+  };
+  const row = (text: string) =>
+    fields().find((el) => el.value === text)!.closest('[data-draggable]') as HTMLElement;
+  const selected = () =>
+    fields()
+      .filter((el) => el.closest('[data-selected="true"]'))
+      .map((el) => el.value);
+
+  it('selects a range with Shift-click and deletes it with one Backspace', async () => {
+    const { store, user } = await setup(seedABCD);
+    await user.click(fields()[0]);
+    await user.keyboard('{Shift>}');
+    await user.click(row('C'));
+    await user.keyboard('{/Shift}');
+    expect(selected()).toEqual(['A', 'B', 'C']);
+    await user.keyboard('{Backspace}');
+    expect(lines()).toEqual(['D']);
+    expect(store.getState().items.map((i) => i.text)).toEqual(['D']);
+    expect(selected()).toEqual([]);
+  });
+
+  it('selects, without putting the cursor in a line, when the text itself is Shift- or Cmd-clicked', async () => {
+    const { user } = await setup(seedABCD);
+    await user.click(fields()[0]);
+    await user.keyboard('{Shift>}');
+    await user.click(fields()[2]);
+    await user.keyboard('{/Shift}');
+    expect(selected()).toEqual(['A', 'B', 'C']);
+    expect(document.activeElement?.tagName).not.toBe('TEXTAREA');
+    await user.keyboard('{Meta>}');
+    await user.click(fields()[3]);
+    await user.keyboard('{/Meta}');
+    expect(selected()).toEqual(['A', 'B', 'C', 'D']);
+    expect(document.activeElement?.tagName).not.toBe('TEXTAREA');
+    await user.keyboard('{Backspace}');
+    expect(lines()).toEqual([]);
+  });
+
+  it('adds and removes single lines with Cmd-click and deletes with Delete', async () => {
+    const { user } = await setup(seedABCD);
+    await user.keyboard('{Meta>}');
+    await user.click(row('A'));
+    await user.click(row('C'));
+    expect(selected()).toEqual(['A', 'C']);
+    await user.click(row('A'));
+    await user.keyboard('{/Meta}');
+    expect(selected()).toEqual(['C']);
+    await user.keyboard('{Delete}');
+    expect(lines()).toEqual(['A', 'B', 'D']);
+  });
+
+  it('extends and shrinks the selection with Shift and the arrow keys', async () => {
+    const { user } = await setup(seedABCD);
+    await user.click(fields()[0]);
+    await user.keyboard('{Shift>}{ArrowDown}{ArrowDown}{/Shift}');
+    expect(selected()).toEqual(['A', 'B', 'C']);
+    await user.keyboard('{Shift>}{ArrowUp}{/Shift}');
+    expect(selected()).toEqual(['A', 'B']);
+    await user.keyboard('{Backspace}');
+    expect(lines()).toEqual(['C', 'D']);
+  });
+
+  it('selects the lines the mouse is dragged across', async () => {
+    const { user } = await setup(seedABCD);
+    fireEvent.mouseDown(row('B'), { button: 0 });
+    fireEvent.mouseEnter(row('C'), { buttons: 1 });
+    fireEvent.mouseEnter(row('D'), { buttons: 1 });
+    fireEvent.mouseUp(window);
+    expect(selected()).toEqual(['B', 'C', 'D']);
+    await user.keyboard('{Backspace}');
+    expect(lines()).toEqual(['A']);
+  });
+
+  it('does not select when the mouse only moves over lines without a button held', async () => {
+    await setup(seedABCD);
+    fireEvent.mouseDown(row('B'), { button: 0 });
+    fireEvent.mouseUp(window);
+    fireEvent.mouseEnter(row('C'), { buttons: 0 });
+    expect(selected()).toEqual([]);
+  });
+
+  it('clears the selection with Escape without deleting anything', async () => {
+    const { user } = await setup(seedABCD);
+    await user.click(fields()[0]);
+    await user.keyboard('{Shift>}{ArrowDown}{/Shift}');
+    expect(selected()).toEqual(['A', 'B']);
+    await user.keyboard('{Escape}');
+    expect(selected()).toEqual([]);
+    await user.keyboard('{Backspace}');
+    expect(lines()).toEqual(['A', 'B', 'C', 'D']);
+  });
+
+  it('clears the selection on an ordinary click and edits as usual', async () => {
+    const { user } = await setup(seedABCD);
+    await user.click(fields()[0]);
+    await user.keyboard('{Shift>}{ArrowDown}{/Shift}');
+    await user.click(fields()[3]);
+    expect(selected()).toEqual([]);
+    await user.keyboard('!');
+    await user.tab();
+    expect(lines()).toEqual(['A', 'B', 'C', 'D!']);
+  });
+
+  it('keeps a selection inside one section', async () => {
+    const { store, user } = await setup(seedABCD);
+    act(() => {
+      const gifts = store.getState().addSection('Gifts');
+      store.getState().addItems(gifts, ['Lego']);
+    });
+    await user.keyboard('{Meta>}');
+    await user.click(row('A'));
+    await user.click(row('Lego'));
+    await user.keyboard('{/Meta}');
+    expect(selected()).toEqual(['Lego']);
   });
 });

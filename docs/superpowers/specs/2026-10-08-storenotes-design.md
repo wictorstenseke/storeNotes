@@ -62,6 +62,16 @@ Assumptions:
 - Long-press and drag reorders items within a section. Dragging is available only in the manual view ("No store"), not in a sorted view.
 - An item never changes position while it is focused. Any re-sort caused by its category arriving or changing is applied when it loses focus.
 
+### Selecting several items (computer)
+
+- With a mouse and keyboard, several lines in a section can be selected at once and deleted together. Nothing changes on the phone.
+- Drag the mouse from one line to another to select the lines in between.
+- Shift-click selects from the line being edited (or the start of the current selection) to the clicked line. Cmd-click (Ctrl-click) adds or removes a single line.
+- Shift+Arrow down/up from a line starts a selection there and extends or shrinks it.
+- Selected lines get a light yellow background.
+- Backspace or Delete removes all selected lines. Escape, or an ordinary click, clears the selection without deleting.
+- A selection stays within one section, and covers unchecked items only.
+
 ### Quick add
 
 - An input bar is pinned to the bottom of the screen and stays above the on-screen keyboard.
