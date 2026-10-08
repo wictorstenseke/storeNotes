@@ -72,6 +72,10 @@ describe('stores', () => {
     expect(order[0]).toBe('produce');
     expect(order.slice(-2)).toEqual(['beverages', 'snacks']);
     expect(Math.abs(order.indexOf('pet') - order.indexOf('household'))).toBe(1);
+    // Corrections he gave after seeing the first version.
+    expect(order.slice(0, 2)).toEqual(['produce', 'baby']);
+    expect(order.indexOf('deli') - order.indexOf('chilled_sauces')).toBe(1);
+    expect(order.indexOf('baking') - order.indexOf('spices_sauces')).toBe(1);
     expect(order).not.toEqual(STORES[0].baseline);
   });
 

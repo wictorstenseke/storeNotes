@@ -50,25 +50,25 @@ const WILLYS: Category[] = [
 // plausibly are and move as the app learns.
 const ICA: Category[] = [
   'produce',
+  'baby', // corrected: in the same area as fruit and veg, right after
   'meat',
   'fish',
+  'chilled_sauces', // corrected: before the cold cuts
   'deli',
-  'chilled_sauces', // guess: with the cold cuts, as at Willys
   'cheese',
   'pasta_rice',
   'pantry', // guess: dry goods by the pasta
   'canned', // guess: by the ketchup
   'spices_sauces',
+  'baking', // corrected: same aisle as the ketchup
   'bakery',
   'breakfast', // guess: by the bread
-  'baking', // guess: by the coffee
   'coffee_tea',
   'frozen',
   'dairy',
   'eggs', // guess: by the dairy
   'juice',
   'personal_care',
-  'baby', // guess: by hygiene
   'household',
   'pet',
   'other', // guess
