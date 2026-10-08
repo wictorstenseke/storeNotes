@@ -19,6 +19,7 @@
     "supabase/functions/_shared",
     "supabase/functions/categorize/core.ts",
     "supabase/functions/categorize/core.test.ts",
-    "supabase/tests"
+    "supabase/tests",
+    "supabase/schema"
   ]
 }
