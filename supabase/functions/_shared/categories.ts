@@ -18,6 +18,7 @@ export const CATEGORIES = [
   'breakfast',
   'snacks',
   'candy',
+  'juice',
   'beverages',
   'coffee_tea',
   'household',

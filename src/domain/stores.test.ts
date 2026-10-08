@@ -3,9 +3,9 @@ import { CATEGORIES, isCategory } from './categories';
 import { STORES, getStore } from './stores';
 
 describe('categories', () => {
-  it('has 26 unique categories', () => {
-    expect(CATEGORIES).toHaveLength(26);
-    expect(new Set(CATEGORIES).size).toBe(26);
+  it('has 27 unique categories', () => {
+    expect(CATEGORIES).toHaveLength(27);
+    expect(new Set(CATEGORIES).size).toBe(27);
   });
 
   it('keeps chilled sauces and the second freezer apart from their look-alikes', () => {
@@ -13,6 +13,8 @@ describe('categories', () => {
     // and ice cream and frozen berries at the far end, not with frozen food.
     expect(isCategory('chilled_sauces')).toBe(true);
     expect(isCategory('frozen_sweet')).toBe(true);
+    // Chilled juice is by the dairy; soft drinks, beer and cider are by the snacks.
+    expect(isCategory('juice')).toBe(true);
   });
 
   it('recognises only listed categories', () => {
@@ -46,14 +48,14 @@ describe('stores', () => {
     const before = (a: string, b: string) => order.indexOf(a as never) < order.indexOf(b as never);
     expect(order[0]).toBe('produce');
     expect(order.slice(1, 4)).toEqual(['bakery', 'deli', 'chilled_sauces']);
-    expect(order.slice(order.indexOf('dairy'), order.indexOf('dairy') + 3)).toEqual(['dairy', 'cheese', 'beverages']);
+    expect(order.slice(order.indexOf('dairy'), order.indexOf('dairy') + 3)).toEqual(['dairy', 'cheese', 'juice']);
     expect(before('fish', 'dairy')).toBe(true);
     expect(before('frozen', 'eggs')).toBe(true);
     expect(before('canned', 'spices_sauces')).toBe(true);
     expect(before('spices_sauces', 'pasta_rice')).toBe(true);
     expect(before('baking', 'coffee_tea')).toBe(true);
     expect(before('coffee_tea', 'household')).toBe(true);
-    expect(order.slice(-4)).toEqual(['other', 'snacks', 'candy', 'frozen_sweet']);
+    expect(order.slice(-5)).toEqual(['other', 'beverages', 'snacks', 'candy', 'frozen_sweet']);
   });
 
   it('finds a store by id', () => {

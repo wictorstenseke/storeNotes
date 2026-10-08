@@ -4,10 +4,11 @@ export type StoreDef = { id: string; name: string; baseline: Category[] };
 
 // Willys, as Wictor described it (entrance to checkout):
 //   frukt och grönt; bröd; pålägg, sedan kebabsås, bearnaise och liknande kylda
-//   såser; kött och fisk; mejeri, ost precis efter, och dricka; det frysta
+//   såser; kött och fisk; mejeri, ost precis efter, och juicen (frukostdrycken); det frysta
 //   (mest fisk); ägg; majs, krossade tomater, ketchup och sånt; kryddor; pasta
 //   och ris; frukost, flingor; bakgrejer som mjöl och socker, samt kaffet; hem
-//   och hushåll längst in, hygien, barn, djur, övrigt; sist snacks, godis och
+//   och hushåll längst in, hygien, barn, djur, övrigt; läsk, saft, öl och cider
+//   i närheten av snacksen; sist snacks, godis och
 //   den andra frysen med glass, bär och fryst frukt.
 // The app adjusts this order from the order items are checked off.
 const WILLYS: Category[] = [
@@ -19,7 +20,7 @@ const WILLYS: Category[] = [
   'fish',
   'dairy',
   'cheese',
-  'beverages',
+  'juice',
   'frozen',
   'eggs',
   'canned',
@@ -34,6 +35,7 @@ const WILLYS: Category[] = [
   'baby',
   'pet',
   'other',
+  'beverages',
   'snacks',
   'candy',
   'frozen_sweet',

@@ -141,11 +141,11 @@ Feel:
 
 A fixed list, shared by AI tagging and store orders:
 
-`produce`, `bakery`, `dairy`, `cheese`, `eggs`, `meat`, `fish`, `deli`, `chilled_sauces`, `frozen`, `frozen_sweet`, `pantry`, `pasta_rice`, `canned`, `baking`, `spices_sauces`, `breakfast`, `snacks`, `candy`, `beverages`, `coffee_tea`, `household`, `personal_care`, `baby`, `pet`, `other`.
+`produce`, `bakery`, `dairy`, `cheese`, `eggs`, `meat`, `fish`, `deli`, `chilled_sauces`, `frozen`, `frozen_sweet`, `pantry`, `pasta_rice`, `canned`, `baking`, `spices_sauces`, `breakfast`, `snacks`, `candy`, `juice`, `beverages`, `coffee_tea`, `household`, `personal_care`, `baby`, `pet`, `other`.
 
 Every store's baseline order lists all of them.
 
-Two categories exist because Willys keeps look-alike goods in different places: `chilled_sauces` (kebab sauce, bearnaise and similar, next to the cold cuts, not with spices and ketchup) and `frozen_sweet` (ice cream, frozen berries and fruit, in a second freezer at the far end, not with frozen food). The model is given examples for each category so it can tell them apart.
+Three categories exist because Willys keeps look-alike goods in different places: `juice` (chilled juice by the dairy, not with soft drinks, beer and cider, which are by the snacks), `chilled_sauces` (kebab sauce, bearnaise and similar, next to the cold cuts, not with spices and ketchup) and `frozen_sweet` (ice cream, frozen berries and fruit, in a second freezer at the far end, not with frozen food). The model is given examples for each category so it can tell them apart.
 
 ## Architecture
 

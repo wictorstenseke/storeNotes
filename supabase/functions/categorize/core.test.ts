@@ -150,6 +150,9 @@ describe('buildPrompt', () => {
     expect(line('frozen_sweet')).toContain('glass');
     expect(line('frozen_sweet')).toContain('frysta bär');
     expect(line('frozen')).toMatch(/not ice cream/i);
+    expect(line('juice')).toContain('apelsinjuice');
+    expect(line('beverages')).toContain('läsk');
+    expect(line('beverages')).toMatch(/not chilled juice/i);
     for (const category of CATEGORIES) expect(line(category)).not.toBe('');
   });
 
