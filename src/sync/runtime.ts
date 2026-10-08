@@ -1,8 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Category } from '../domain/categories';
 import { readSetting, writeSetting } from '../state/deviceSettings';
 import { createNoteStore, type NoteStore } from '../state/noteStore';
 import { showNotice, useSyncStatus } from '../state/syncStatus';
 import type { Person } from '../ui/SettingsSheet';
+import { Categorizer } from './categorizer';
 import { LocalDb } from './localDb';
 import { Outbox } from './outbox';
 import { supabaseRemote } from './supabaseRemote';
@@ -43,18 +45,28 @@ export async function startRuntime(sb: SupabaseClient): Promise<Runtime> {
     void outbox.count().then((pending) => useSyncStatus.setState({ pending }));
 
   let engine: SyncEngine | null = null;
+  let categorizer: Categorizer | null = null;
+
   const store = createNoteStore({
     db,
     outbox,
     onLocalWrite: () => {
       refreshPending();
-      void engine?.flush();
+      // Send the change first so the item exists remotely, then tag it.
+      void engine?.flush().then(() => categorizer?.run());
     },
   });
   await store.getState().load(id);
 
+  categorizer = new Categorizer(async (texts) => {
+    const { data, error } = await sb.functions.invoke('categorize', { body: { texts } });
+    if (error) throw error;
+    return (data as { categories: Record<string, Category> }).categories;
+  }, store);
+
   engine = new SyncEngine(db, outbox, supabaseRemote(sb), id, {
-    onChange: () => void store.getState().reload(),
+    // Changes from the other device can include untagged items.
+    onChange: () => void store.getState().reload().then(() => categorizer?.run()),
     onRejected: () => showNotice('A change could not be saved.'),
     onStatus: (pending) => useSyncStatus.setState({ pending }),
   });
