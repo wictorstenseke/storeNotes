@@ -88,7 +88,9 @@ export async function startRuntime(sb: SupabaseClient): Promise<Runtime> {
       stop();
       await db.delete();
       writeSetting('listId', null);
-      await sb.auth.signOut();
+      // This device only. The default would end every session of the account,
+      // signing out the other phone when both use the same login.
+      await sb.auth.signOut({ scope: 'local' });
     },
     loadPeople: async () => {
       const { data } = await sb.rpc('list_people', { l: id });
