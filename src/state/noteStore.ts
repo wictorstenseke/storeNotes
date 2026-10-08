@@ -1,6 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type { Category } from '../domain/categories';
-import { learnFromDone } from '../domain/learning';
+import { baselineScores, learnFromDone } from '../domain/learning';
 import { newId as defaultNewId } from '../domain/newId';
 import { positionBetween } from '../domain/position';
 import { byManual, sortOpen } from '../domain/sort';
@@ -30,6 +30,8 @@ export type NoteActions = {
   moveItem(id: string, toIndex: number): void;
   deleteItem(id: string): void;
   clearDone(sectionId: string): void;
+  setStoreOrder(storeId: string, order: Category[]): void;
+  resetStoreOrder(storeId: string): void;
   addSection(title?: string): string;
   renameSection(id: string, title: string): void;
   setStoreSort(id: string, on: boolean): void;
@@ -231,6 +233,24 @@ export function createNoteStore(deps: NoteDeps): NoteStore {
         const gone = new Set(done.map((i) => i.id));
         set({ items: get().items.filter((i) => !gone.has(i.id)), storeOrders: orders });
         persist(ops);
+      },
+
+      // An order set by hand is stored the same way as a learned one (a score
+      // per category), so it syncs and check-offs keep adjusting it.
+      setStoreOrder: (storeId, order) => {
+        const row: StoreOrder = {
+          list_id: listId(),
+          store_id: storeId,
+          scores: baselineScores(order),
+          updated_at: now(),
+        };
+        set({ storeOrders: [...get().storeOrders.filter((o) => o.store_id !== storeId), row] });
+        persist([{ table: 'store_orders', kind: 'upsert', id: storeId, values: { ...row } }]);
+      },
+
+      resetStoreOrder: (storeId) => {
+        const store = stores.find((s) => s.id === storeId);
+        if (store) get().setStoreOrder(storeId, store.baseline);
       },
 
       addSection: (title = '') => {

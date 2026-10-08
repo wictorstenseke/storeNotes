@@ -12,11 +12,13 @@ type UiState = {
   storeId: string | null;
   quickAddSectionId: string | null;
   selection: Selection | null;
+  orderEditorStore: string | null; // the store whose order is being edited, if any
   requestFocus(id: string | null): void;
   setHold(hold: Hold | null): void;
   setStoreId(id: string | null): void;
   setQuickAddSectionId(id: string | null): void;
   setSelection(selection: Selection | null): void;
+  setOrderEditorStore(id: string | null): void;
 };
 
 export const useUi = create<UiState>()((set) => ({
@@ -25,9 +27,11 @@ export const useUi = create<UiState>()((set) => ({
   storeId: readSetting('storeId'),
   quickAddSectionId: readSetting('quickAddSectionId'),
   selection: null,
+  orderEditorStore: null,
   requestFocus: (focusId) => set({ focusId }),
   setHold: (hold) => set({ hold }),
   setSelection: (selection) => set({ selection }),
+  setOrderEditorStore: (orderEditorStore) => set({ orderEditorStore }),
   setStoreId: (storeId) => {
     writeSetting('storeId', storeId);
     set({ storeId });

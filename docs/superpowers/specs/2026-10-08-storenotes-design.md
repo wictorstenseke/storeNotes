@@ -96,6 +96,16 @@ Assumptions:
 - Selecting a store never changes the stored manual order.
 - A new line created with Enter in a sorted view is displayed directly below the line it was created from while it is focused. This placement is display-only and not stored. When the line loses focus it follows the normal rules: untagged at the top until its category arrives, then in its category's place.
 
+### Editing a store's order
+
+- `Edit store order` in the `⋯` menu of a section with store sort on opens the order of the chosen store (the first store when none is chosen). The other store can be picked inside the editor.
+- The editor lists every category by its Swedish name, numbered in walking order, with a few examples where the name alone is unclear.
+- A category is moved by dragging its handle, on phone and computer. Only the handle drags, so the list still scrolls. Arrow up and down on a focused handle move it one step.
+- Every move is saved at once and synced like any other change; there is no save button.
+- An order set by hand is stored the same way as a learned one, so checking items off keeps adjusting it.
+- `Reset to original order` puts the store back to the order defined in `stores.ts`.
+- Adding, removing or renaming stores, and adding categories, still happen in code.
+
 ### Checking off
 
 - Checking an item moves it to a dimmed `Done` group at the bottom of its section. Done items are ordered most recently checked first.

@@ -11,6 +11,7 @@ function setup(storeSort = false, storeId: string | null = null) {
     storeId,
     onStoreSort: vi.fn(),
     onStore: vi.fn(),
+    onEditOrder: vi.fn(),
     onDelete: vi.fn(),
   };
   render(<SectionMenu {...props} />);
@@ -54,6 +55,20 @@ describe('SectionMenu', () => {
     await openMenu(user);
     expect(await screen.findByRole('menuitemradio', { name: STORES[0].name })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByRole('menuitemradio', { name: 'No store' })).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('opens the store order editor from a section with store sort on', async () => {
+    const { props, user } = setup(true);
+    await openMenu(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Edit store order' }));
+    expect(props.onEditOrder).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not offer the store order editor when store sort is off', async () => {
+    const { user } = setup(false);
+    await openMenu(user);
+    await screen.findByRole('menuitemcheckbox', { name: 'Sort by store' });
+    expect(screen.queryByRole('menuitem', { name: 'Edit store order' })).toBeNull();
   });
 
   it('offers no stores when store sort is off', async () => {

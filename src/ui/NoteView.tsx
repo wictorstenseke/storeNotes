@@ -4,6 +4,7 @@ import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
 import { QuickAddBar } from './QuickAddBar';
 import { SectionView } from './SectionView';
+import { StoreOrderSheet } from './StoreOrder';
 
 export function NoteView({ header, banner }: { header?: ReactNode; banner?: ReactNode }) {
   const store = useNoteStore();
@@ -30,6 +31,7 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
         + New section
       </button>
       <QuickAddBar />
+      <StoreOrderSheet />
     </main>
   );
 }

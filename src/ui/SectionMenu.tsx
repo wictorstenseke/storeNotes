@@ -27,12 +27,21 @@ type Props = {
   storeId: string | null;
   onStoreSort(on: boolean): void;
   onStore(id: string | null): void;
+  onEditOrder(): void;
   onDelete(): void;
 };
 
 const NO_STORE = 'none';
 
-export function SectionMenu({ title, storeSort, storeId, onStoreSort, onStore, onDelete }: Props) {
+export function SectionMenu({
+  title,
+  storeSort,
+  storeId,
+  onStoreSort,
+  onStore,
+  onEditOrder,
+  onDelete,
+}: Props) {
   const [confirming, setConfirming] = useState(false);
   const chosen = getStore(storeId)?.id ?? NO_STORE;
   return (
@@ -60,6 +69,7 @@ export function SectionMenu({ title, storeSort, storeId, onStoreSort, onStore, o
                   </DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>
+              <DropdownMenuItem onClick={onEditOrder}>Edit store order</DropdownMenuItem>
               <DropdownMenuSeparator />
             </>
           )}

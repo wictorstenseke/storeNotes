@@ -93,7 +93,10 @@ export function SettingsSheet(props: Props) {
       <SheetTrigger aria-label="Settings" className="px-1 text-[18px] leading-none text-ink-2">
         ⚙
       </SheetTrigger>
-      <SheetContent side="bottom">
+      <SheetContent
+        side="bottom"
+        className="rounded-t-2xl data-[side=bottom]:mx-auto data-[side=bottom]:max-w-xl"
+      >
         <SheetHeader>
           <SheetTitle className="text-[20px] font-semibold">Settings</SheetTitle>
           <SheetDescription className="sr-only">Sharing and account</SheetDescription>

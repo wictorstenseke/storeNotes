@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Category } from '../domain/categories';
+import { effectiveOrder } from '../domain/learning';
 import { sortOpen } from '../domain/sort';
 import type { StoreDef } from '../domain/stores';
 import { makeStore } from '../test/helpers';
@@ -208,5 +209,63 @@ describe('loading', () => {
     await reloading;
     await ctx.s().idle();
     expect(ctx.s().items.map((i) => i.id)).toEqual([a]);
+  });
+});
+
+describe('store order set by hand', () => {
+  const scoresFor = (ctx: Awaited<ReturnType<typeof withSection>>) =>
+    ctx.s().storeOrders.find((o) => o.store_id === 's1')?.scores;
+
+  it('saves the order so that it becomes the effective order, and queues it for sync', async () => {
+    const ctx = await withSection();
+    const order: Category[] = ['candy', 'produce', 'other', 'dairy', 'frozen'];
+    ctx.s().setStoreOrder('s1', order);
+    expect(effectiveOrder(BASE, scoresFor(ctx))).toEqual(order);
+    await ctx.s().idle();
+    expect(await ctx.db.store_orders.get(['list-1', 's1'])).toBeDefined();
+    expect(await queued(ctx)).toContain('store_orders:upsert:s1');
+  });
+
+  it('replaces an earlier order for the same store', async () => {
+    const ctx = await withSection();
+    ctx.s().setStoreOrder('s1', ['candy', 'produce', 'other', 'dairy', 'frozen']);
+    ctx.s().setStoreOrder('s1', ['other', 'frozen', 'dairy', 'candy', 'produce']);
+    expect(ctx.s().storeOrders).toHaveLength(1);
+    expect(effectiveOrder(BASE, scoresFor(ctx))).toEqual(['other', 'frozen', 'dairy', 'candy', 'produce']);
+  });
+
+  it('goes back to the original order on reset', async () => {
+    const ctx = await withSection();
+    ctx.s().setStoreOrder('s1', ['candy', 'produce', 'other', 'dairy', 'frozen']);
+    ctx.s().resetStoreOrder('s1');
+    expect(effectiveOrder(BASE, scoresFor(ctx))).toEqual(BASE);
+  });
+
+  it('ignores a reset for a store that is not defined', async () => {
+    const ctx = await withSection();
+    await ctx.s().idle();
+    const before = await ctx.outbox.count();
+    ctx.s().resetStoreOrder('closed-store');
+    await ctx.s().idle();
+    expect(await ctx.outbox.count()).toBe(before);
+  });
+
+  it('keeps learning from check-offs, starting from the order set by hand', async () => {
+    const ctx = await withSection();
+    // By hand: frozen first. The trip then checks produce, dairy, frozen in that order.
+    ctx.s().setStoreOrder('s1', ['frozen', 'dairy', 'produce', 'candy', 'other']);
+    const [apple, milk, ice] = ctx.s().addItems(ctx.sectionId, ['Apple', 'Milk', 'Ice']);
+    ctx.s().setCategory(apple, 'produce', 'Apple');
+    ctx.s().setCategory(milk, 'dairy', 'Milk');
+    ctx.s().setCategory(ice, 'frozen', 'Ice');
+    ctx.s().checkItem(apple, 's1');
+    ctx.s().checkItem(milk, 's1');
+    ctx.s().checkItem(ice, 's1');
+    ctx.s().clearDone(ctx.sectionId);
+    const scores = scoresFor(ctx)!;
+    // frozen was 0 by hand and was checked last (1): 0.7 * 0 + 0.3 * 1
+    expect(scores.frozen).toBeCloseTo(0.3);
+    // produce was 0.5 by hand and was checked first (0): 0.7 * 0.5 + 0.3 * 0
+    expect(scores.produce).toBeCloseTo(0.35);
   });
 });

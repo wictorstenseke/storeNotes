@@ -15,7 +15,7 @@ import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { effectiveOrder } from '../domain/learning';
 import { rangeIds, toggleId } from '../domain/selection';
 import { sortDone, sortOpen } from '../domain/sort';
-import { getStore } from '../domain/stores';
+import { STORES, getStore } from '../domain/stores';
 import type { Item, Section } from '../domain/types';
 import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
@@ -296,6 +296,7 @@ export function SectionView({ section }: { section: Section }) {
           storeId={storeId}
           onStoreSort={(on) => note.setStoreSort(section.id, on)}
           onStore={ui.setStoreId}
+          onEditOrder={() => ui.setOrderEditorStore(activeStore?.id ?? STORES[0].id)}
           onDelete={() => note.deleteSection(section.id)}
         />
       </div>

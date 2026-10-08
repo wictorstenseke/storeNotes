@@ -11,7 +11,14 @@ import { makeStore } from '../test/helpers';
 import { NoteView } from './NoteView';
 
 beforeEach(() => {
-  useUi.setState({ focusId: null, hold: null, storeId: null, quickAddSectionId: null, selection: null });
+  useUi.setState({
+    focusId: null,
+    hold: null,
+    storeId: null,
+    quickAddSectionId: null,
+    selection: null,
+    orderEditorStore: null,
+  });
 });
 
 async function setup(seed?: (note: NoteState & NoteActions, sectionId: string) => void) {
@@ -316,5 +323,26 @@ describe('selecting several items', () => {
     await user.click(row('Lego'));
     await user.keyboard('{/Meta}');
     expect(selected()).toEqual(['Lego']);
+  });
+});
+
+describe('editing the store order', () => {
+  const openEditor = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(screen.getByRole('button', { name: 'Options for Grocery List' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Edit store order' }));
+    return screen.findByRole('dialog', { name: 'Store order' });
+  };
+
+  it('opens for the first store when no store is chosen', async () => {
+    const { user } = await setup(seedAC);
+    const dialog = await openEditor(user);
+    expect(within(dialog).getByRole('button', { name: STORES[0].name })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('opens for the store that is chosen', async () => {
+    const { user } = await setup(seedAC);
+    await chooseStore(user, STORES[1].name);
+    const dialog = await openEditor(user);
+    expect(within(dialog).getByRole('button', { name: STORES[1].name })).toHaveAttribute('aria-pressed', 'true');
   });
 });
