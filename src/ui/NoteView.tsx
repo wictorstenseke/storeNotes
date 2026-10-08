@@ -13,6 +13,7 @@ import { byManual } from '../domain/sort';
 import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
 import { QuickAddBar } from './QuickAddBar';
+import { SyncIndicator } from './SyncIndicator';
 import { useKeyboard } from './useKeyboardInset';
 import { SectionView } from './SectionView';
 
@@ -40,7 +41,13 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
     >
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex min-h-full max-w-xl flex-col pb-6 pt-[env(safe-area-inset-top)]">
-          <header className="mt-5 flex h-11 items-center gap-3 px-5">{header}</header>
+          {/* Zero height, so the button hangs out of it and stays in view while the list scrolls. */}
+          <div className="pointer-events-none sticky top-[calc(env(safe-area-inset-top)+1.25rem)] z-20 mt-5 h-0 px-5">
+            <div className="pointer-events-auto w-fit">{header}</div>
+          </div>
+          <div className="flex h-11 items-center justify-end px-5">
+            <SyncIndicator />
+          </div>
           {banner}
           {sorted.length === 0 ? (
             <Empty className="mx-5 mt-6 w-auto flex-none rounded-lg bg-field px-6 py-12">

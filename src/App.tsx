@@ -8,7 +8,6 @@ import { InviteBanner } from './ui/InviteBanner';
 import { NoteView } from './ui/NoteView';
 import { SettingsSheet } from './ui/SettingsSheet';
 import { SignIn } from './ui/SignIn';
-import { SyncIndicator } from './ui/SyncIndicator';
 import { Button } from '@/components/ui/button';
 
 type Start = (sb: SupabaseClient) => Promise<Runtime>;
@@ -119,7 +118,6 @@ function Note({ sb, start }: { sb: SupabaseClient; start: Start }) {
               invite={runtime.invite}
               onSignOut={() => void runtime.signOut()}
             />
-            <SyncIndicator />
           </>
         }
       />

@@ -47,7 +47,7 @@ function Group({ title, children }: { title?: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-1.5">
       {title && <h3 className="text-[13px] text-ink-2">{title}</h3>}
-      <div className="flex flex-col divide-y divide-line overflow-hidden rounded-lg bg-page">{children}</div>
+      <div className="flex flex-col divide-y divide-line/25 overflow-hidden rounded-lg bg-page">{children}</div>
     </section>
   );
 }
@@ -242,9 +242,12 @@ export function SettingsSheet({ loadPeople, invite, onSignOut }: SheetProps) {
         setOpen(next);
       }}
     >
-      <SheetTrigger className="flex items-center gap-1.5 py-2 text-[14px] font-semibold text-ink-2">
-        <MenuIcon className="size-[18px]" />
-        Meny
+      {/* A round glass button: translucent, blurred, hairline edge and a soft shadow. */}
+      <SheetTrigger
+        aria-label="Meny"
+        className="grid size-11 place-items-center rounded-full border border-line/60 bg-page/60 text-ink shadow-[0_2px_12px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-xl backdrop-saturate-150 active:bg-page/80"
+      >
+        <MenuIcon className="size-5" />
       </SheetTrigger>
       <SheetContent
         side="bottom"
