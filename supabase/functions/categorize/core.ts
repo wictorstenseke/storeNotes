@@ -99,7 +99,8 @@ const CATEGORY_HINTS: Record<Category, string> = {
   spices_sauces:
     'kryddor, salt, and sauces from the shelf: ketchup, senap, soja, sweet chili, tacosås, pastasås',
   breakfast: 'flingor, müsli, gröt, havregryn, sylt, honung',
-  snacks: 'chips, popcorn, nötter som snacks, kex',
+  snacks: 'chips, popcorn, nötter som snacks (not kex or kakor)',
+  biscuits: 'the biscuit and cookie section, by the chilled drinks: kex, kakor, cookies, digestive, havrekex, mariekex, chokladkex',
   candy: 'godis, choklad, tuggummi',
   juice: 'chilled juice kept by the dairy: apelsinjuice, äppeljuice, färskpressad juice, smoothie',
   beverages: 'läsk, saft, vatten, öl, cider, energidryck, måltidsdryck (not chilled juice)',

@@ -21,6 +21,7 @@ export const CATEGORY_LABELS: Record<Category, { name: string; examples?: string
   spices_sauces: { name: 'Kryddor & såser', examples: 'ketchup, senap' },
   breakfast: { name: 'Frukost', examples: 'flingor, müsli' },
   snacks: { name: 'Snacks' },
+  biscuits: { name: 'Kex & kakor', examples: 'kex, kakor, digestive' },
   candy: { name: 'Godis' },
   juice: { name: 'Kyld dryck', examples: 'juice, smoothie' },
   beverages: { name: 'Dryck', examples: 'läsk, saft, öl' },

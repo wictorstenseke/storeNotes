@@ -17,6 +17,7 @@ export const CATEGORIES = [
   'spices_sauces',
   'breakfast',
   'snacks',
+  'biscuits',
   'candy',
   'juice',
   'beverages',

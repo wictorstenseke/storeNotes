@@ -4,7 +4,8 @@ export type StoreDef = { id: string; name: string; baseline: Category[] };
 
 // Willys, as Wictor described it (entrance to checkout):
 //   frukt och grönt; bröd; pålägg, sedan kebabsås, bearnaise och liknande kylda
-//   såser; kött och fisk; mejeri; kyld dryck (juicen, frukostdrycken); det frysta
+//   såser; kött och fisk; mejeri; kyld dryck (juicen, frukostdrycken); kex och
+//   kakor (egen avdelning vid de kylda dryckerna); det frysta
 //   (mest fisk); ost; ägg; majs, krossade tomater, ketchup och sånt; kryddor; pasta
 //   och ris; frukost, flingor; bakgrejer som mjöl och socker, samt kaffet; hem
 //   och hushåll längst in, hygien, barn, djur, övrigt; läsk, saft, öl och cider
@@ -20,6 +21,7 @@ const WILLYS: Category[] = [
   'fish',
   'dairy',
   'juice',
+  'biscuits', // corrected: its own section by the chilled drinks
   'frozen',
   'cheese',
   'eggs',
@@ -72,6 +74,7 @@ const ICA: Category[] = [
   'household',
   'pet',
   'other', // guess
+  'biscuits', // guess: by the sweets
   'candy',
   'frozen_sweet',
   'beverages',
