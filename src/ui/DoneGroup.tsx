@@ -1,4 +1,5 @@
 import { CheckIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import type { Item } from '../domain/types';
 import { MOTION } from './motion';
@@ -8,6 +9,13 @@ type Props = { items: Item[]; onUncheck(id: string): void; onClear(): void };
 
 export function DoneGroup({ items, onUncheck, onClear }: Props) {
   const [list] = useAutoAnimate<HTMLDivElement>(MOTION);
+  // Clearing needs a second press, so a stray tap does not remove everything.
+  const [confirming, setConfirming] = useState(false);
+  useEffect(() => {
+    if (!confirming) return;
+    const timer = setTimeout(() => setConfirming(false), 4000);
+    return () => clearTimeout(timer);
+  }, [confirming]);
   if (items.length === 0) return null;
   return (
     <div className="mt-2 bg-field/40 py-3 sm:mx-2 sm:rounded-lg">
@@ -29,8 +37,21 @@ export function DoneGroup({ items, onUncheck, onClear }: Props) {
           </button>
         ))}
       </div>
-      <Button variant="outline" size="sm" className="ml-5 mt-2 bg-page sm:ml-3" onClick={onClear}>
-        Rensa klara
+      <Button
+        variant={confirming ? 'destructive' : 'outline'}
+        size="sm"
+        className="ml-5 mt-2 bg-page sm:ml-3"
+        onBlur={() => setConfirming(false)}
+        onClick={() => {
+          if (!confirming) {
+            setConfirming(true);
+            return;
+          }
+          setConfirming(false);
+          onClear();
+        }}
+      >
+        {confirming ? 'Jag är säker' : 'Rensa klara'}
       </Button>
     </div>
   );
