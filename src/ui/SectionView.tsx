@@ -33,13 +33,21 @@ type TitleProps = {
 };
 
 function SectionTitle({ title, wantFocus, onFocused, onCommit, onEnter }: TitleProps) {
-  const field = useRef<HTMLInputElement>(null);
+  const field = useRef<HTMLTextAreaElement>(null);
   const editing = useRef(false);
   const [draft, setDraft] = useState(title);
 
   useEffect(() => {
     if (!editing.current) setDraft(title);
   }, [title]);
+
+  // Grow with the content so a long title wraps instead of scrolling sideways.
+  useLayoutEffect(() => {
+    const el = field.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [draft]);
 
   useLayoutEffect(() => {
     if (!wantFocus) return;
@@ -49,14 +57,19 @@ function SectionTitle({ title, wantFocus, onFocused, onCommit, onEnter }: TitleP
   }, [wantFocus]);
 
   return (
-    <input
+    // iOS offers "Autofyll kontakt" on fields it reads as a name, so neither the
+    // label nor the placeholder say "namn"/"name".
+    <textarea
       ref={field}
+      rows={1}
       value={draft}
-      aria-label="Listans namn"
+      aria-label="Listrubrik"
       placeholder="Lista"
       enterKeyHint="next"
-      className="min-w-0 flex-1 bg-transparent text-[20px] font-semibold leading-7 caret-notes-ink outline-none placeholder:text-ink-2"
-      onChange={(event) => setDraft(event.target.value)}
+      autoCapitalize="sentences"
+      autoComplete="off"
+      className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-[20px] font-semibold leading-7 caret-notes-ink outline-none placeholder:text-ink-2"
+      onChange={(event) => setDraft(event.target.value.replace(/\s*[\r\n]+\s*/g, ' '))}
       onFocus={() => {
         editing.current = true;
       }}
@@ -117,6 +130,7 @@ export function SectionView({ section }: { section: Section }) {
   const hold = useUi((s) => s.hold);
   const storeId = useUi((s) => s.storeId);
   const selection = useUi((s) => s.selection);
+  const hideHint = useUi((s) => s.hiddenStoreHints.includes(section.id));
 
   const mine = useMemo(() => items.filter((i) => i.section_id === section.id), [items, section.id]);
 
@@ -278,7 +292,7 @@ export function SectionView({ section }: { section: Section }) {
 
   return (
     <section className="mt-5" aria-label={section.title || 'Namnlös lista'}>
-      <div className="flex items-center gap-2 px-4">
+      <div className="flex items-center gap-2 px-5">
         <SectionTitle
           title={section.title}
           wantFocus={focusId === section.id}
@@ -286,14 +300,18 @@ export function SectionView({ section }: { section: Section }) {
           onCommit={(title) => note.renameSection(section.id, title)}
           onEnter={() => startLine(null, open.length)}
         />
-        {/* The store is chosen in the menu; name it here so the choice is visible. */}
-        {activeStore && (
-          <span className="shrink-0 text-[13px] text-ink-2">{activeStore.name}</span>
+        {/* The store is chosen in the list's menu; name it here (or say none is chosen) so the choice is visible. */}
+        {!hideHint && (
+          <span className="shrink-0 text-[13px] text-ink-2">
+            {activeStore ? activeStore.name : 'Ingen butik vald'}
+          </span>
         )}
         <SectionMenu
           title={section.title}
           storeSort={section.store_sort}
           storeId={storeId}
+          hideHint={hideHint}
+          onToggleHint={() => ui.toggleStoreHint(section.id)}
           onStore={(id) => {
             // The store is per device, whether to sort by it is per list.
             if (id) ui.setStoreId(id);

@@ -1,10 +1,25 @@
 import { CheckIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { parseQuickAdd } from '../domain/parseQuickAdd';
 import { byManual } from '../domain/sort';
 import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
 import { useKeyboardInset } from './useKeyboardInset';
+
+// iOS scrolls the page to reveal a field that the keyboard is about to cover, and
+// this field sits at the bottom, so the whole list would scroll away. Focusing it
+// while it is moved out of the way means there is nothing to reveal.
+function focusWithoutScroll(el: HTMLTextAreaElement) {
+  if (document.activeElement === el) return;
+  const scrollY = window.scrollY;
+  el.style.transform = 'translateY(-9999px)';
+  el.focus({ preventScroll: true });
+  requestAnimationFrame(() => {
+    el.style.transform = '';
+    window.scrollTo(0, scrollY);
+  });
+}
 
 export function QuickAddBar() {
   const note = useNoteStore().getState();
@@ -51,7 +66,7 @@ export function QuickAddBar() {
       style={{ bottom: inset, paddingBottom: inset > 0 ? 0 : 'env(safe-area-inset-bottom)' }}
     >
       <form
-        className="mx-auto flex max-w-xl flex-col gap-1 px-4 pb-2 pt-1.5"
+        className="mx-auto flex max-w-xl flex-col gap-1 px-5 pb-2 pt-3"
         onSubmit={(event) => {
           event.preventDefault();
           submit();
@@ -61,19 +76,25 @@ export function QuickAddBar() {
         <button
           type="button"
           aria-label={`Lägger till i ${name}. Tryck för att byta lista`}
-          className="max-w-full self-start truncate px-3.5 text-[13px] font-semibold text-notes-ink"
+          className="max-w-full self-start truncate text-left text-[13px]"
           onClick={nextSection}
           {...keepFocus}
         >
-          {name}
+          <span className="text-ink-2">Lista: </span>
+          <span className="font-semibold text-notes-ink">{name}</span>
         </button>
         <div className="flex items-center gap-2">
           <div
-            className="flex min-w-0 flex-1 items-center rounded-[20px] bg-field px-3.5 py-[7px]"
-            onClick={() => field.current?.focus()}
+            className="flex min-w-0 flex-1 items-center rounded-lg bg-field px-3.5 py-[7px]"
+            onClick={() => field.current && focusWithoutScroll(field.current)}
           >
             <textarea
               ref={field}
+              onMouseDown={(event) => {
+                if (document.activeElement === event.currentTarget) return;
+                event.preventDefault();
+                focusWithoutScroll(event.currentTarget);
+              }}
               rows={1}
               value={text}
               aria-label="Lägg till vara"
@@ -90,23 +111,22 @@ export function QuickAddBar() {
             />
           </div>
           {/* Not `disabled`: a disabled button would take the tap and close the keyboard. */}
-          <button
+          <Button
             type="submit"
+            size="lg"
             aria-disabled={!canAdd}
-            className={`h-9 min-w-24 shrink-0 rounded-full bg-notes px-4 text-[14px] font-semibold text-black transition-opacity ${
-              canAdd || added > 0 ? '' : 'opacity-40'
-            }`}
+            className={`min-w-24 shrink-0 ${canAdd || added > 0 ? '' : 'opacity-40'}`}
             {...keepFocus}
           >
             {added > 0 ? (
-              <span className="inline-flex items-center gap-1">
-                <CheckIcon className="size-4" strokeWidth={3} />
+              <>
+                <CheckIcon data-icon="inline-start" strokeWidth={3} />
                 {added > 1 ? `${added} tillagda` : 'Tillagd'}
-              </span>
+              </>
             ) : (
               'Lägg till'
             )}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

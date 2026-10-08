@@ -9,6 +9,7 @@ import { NoteView } from './ui/NoteView';
 import { SettingsSheet } from './ui/SettingsSheet';
 import { SignIn } from './ui/SignIn';
 import { SyncIndicator } from './ui/SyncIndicator';
+import { Button } from '@/components/ui/button';
 
 type Start = (sb: SupabaseClient) => Promise<Runtime>;
 
@@ -97,13 +98,9 @@ function Note({ sb, start }: { sb: SupabaseClient; start: Start }) {
     return (
       <main className="mx-auto flex max-w-sm flex-col gap-3 px-6 pt-24">
         <p className="text-[14px] text-ink-2">Anslut till internet för att slutföra installationen.</p>
-        <button
-          type="button"
-          className="self-start text-[16px] font-semibold text-notes-ink"
-          onClick={() => setAttempt((n) => n + 1)}
-        >
+        <Button size="lg" className="self-start" onClick={() => setAttempt((n) => n + 1)}>
           Försök igen
-        </button>
+        </Button>
       </main>
     );
   }
@@ -117,12 +114,12 @@ function Note({ sb, start }: { sb: SupabaseClient; start: Start }) {
         }
         header={
           <>
-            <SyncIndicator />
             <SettingsSheet
               loadPeople={runtime.loadPeople}
               invite={runtime.invite}
               onSignOut={() => void runtime.signOut()}
             />
+            <SyncIndicator />
           </>
         }
       />

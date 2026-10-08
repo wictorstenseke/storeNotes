@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { normalizeEmail } from '../domain/email';
+import { Button } from '@/components/ui/button';
 
 type AuthError = { message: string } | null;
 
@@ -17,7 +18,6 @@ const MIN_PASSWORD = 8;
 
 const FIELD =
   'w-full border-b border-line bg-transparent py-2 text-[16px] text-ink caret-notes-ink outline-none placeholder:text-ink-2';
-const BUTTON = 'self-start text-[16px] font-semibold text-notes-ink disabled:opacity-50';
 
 function signInError(message: string): string {
   if (/not confirmed/i.test(message)) {
@@ -112,9 +112,9 @@ export function SignIn({ auth }: { auth: AuthApi }) {
             onChange={(event) => setPassword(event.target.value)}
           />
         </label>
-        <button type="submit" className={BUTTON} disabled={busy}>
+        <Button type="submit" size="lg" className="self-start" disabled={busy}>
           {creating ? 'Skapa konto' : 'Logga in'}
-        </button>
+        </Button>
       </form>
       {notice && (
         <p role="status" className="text-[14px] text-ink">
@@ -126,9 +126,9 @@ export function SignIn({ auth }: { auth: AuthApi }) {
           {error}
         </p>
       )}
-      <button type="button" className="self-start text-[13px] text-ink-2" onClick={switchMode}>
+      <Button type="button" variant="link" className="self-start px-0" onClick={switchMode}>
         {creating ? 'Jag har redan ett konto' : 'Skapa ett konto'}
-      </button>
+      </Button>
     </main>
   );
 }

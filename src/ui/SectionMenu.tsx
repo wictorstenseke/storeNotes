@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuRadioGroup,
@@ -25,6 +26,8 @@ type Props = {
   title: string;
   storeSort: boolean;
   storeId: string | null;
+  hideHint: boolean;
+  onToggleHint(): void;
   onStore(id: string | null): void;
   onDelete(): void;
 };
@@ -35,6 +38,8 @@ export function SectionMenu({
   title,
   storeSort,
   storeId,
+  hideHint,
+  onToggleHint,
   onStore,
   onDelete,
 }: Props) {
@@ -63,6 +68,9 @@ export function SectionMenu({
               </DropdownMenuRadioItem>
             ))}
           </DropdownMenuRadioGroup>
+          <DropdownMenuCheckboxItem checked={hideHint} onCheckedChange={onToggleHint}>
+            Dölj fält
+          </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setConfirming(true)}>Ta bort lista</DropdownMenuItem>
         </DropdownMenuContent>

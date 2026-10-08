@@ -4,11 +4,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { STORES } from '../domain/stores';
 import { SectionMenu } from './SectionMenu';
 
-function setup(storeSort = false, storeId: string | null = null) {
+function setup(storeSort = false, storeId: string | null = null, hideHint = false) {
   const props = {
     title: 'Gifts',
     storeSort,
     storeId,
+    hideHint,
+    onToggleHint: vi.fn(),
     onStore: vi.fn(),
     onDelete: vi.fn(),
   };
@@ -46,6 +48,21 @@ describe('SectionMenu', () => {
     await openMenu(user);
     expect(await screen.findByRole('menuitemradio', { name: 'Ingen butik' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByRole('menuitemradio', { name: STORES[0].name })).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('toggles the store text with a checkbox', async () => {
+    const { props, user } = setup();
+    await openMenu(user);
+    const box = await screen.findByRole('menuitemcheckbox', { name: 'Dölj fält' });
+    expect(box).toHaveAttribute('aria-checked', 'false');
+    await user.click(box);
+    expect(props.onToggleHint).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the checkbox as checked when the store text is hidden', async () => {
+    const { user } = setup(false, null, true);
+    await openMenu(user);
+    expect(await screen.findByRole('menuitemcheckbox', { name: 'Dölj fält' })).toHaveAttribute('aria-checked', 'true');
   });
 
   it('asks before deleting and deletes on confirm', async () => {

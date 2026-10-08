@@ -3,13 +3,12 @@ import { useLayoutEffect, useMemo, useRef } from 'react';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import type { Category } from '../domain/categories';
 import { CATEGORY_LABELS } from '../domain/categoryLabels';
 import { effectiveOrder } from '../domain/learning';
 import { STORES, getStore } from '../domain/stores';
 import { useNote, useNoteStore } from '../state/context';
-import { useUi } from '../state/uiStore';
+import { Button } from '@/components/ui/button';
 
 type RowProps = { category: Category; index: number; onMove(dir: -1 | 1): void };
 
@@ -140,41 +139,13 @@ export function StoreOrderPanel({ storeId, onStore }: PanelProps) {
       <div className="min-h-0 flex-1 overflow-y-auto">
         <StoreOrderList order={order} onChange={(next) => note.setStoreOrder(store.id, next)} />
       </div>
-      <button
-        type="button"
-        className="self-start px-4 py-3 text-[14px] text-notes-ink"
+      <Button
+        variant="outline"
+        className="mx-4 mt-3 self-start"
         onClick={() => note.resetStoreOrder(store.id)}
       >
         Återställ ursprunglig ordning
-      </button>
+      </Button>
     </div>
-  );
-}
-
-export function StoreOrderSheet() {
-  const editing = useUi((s) => s.orderEditorStore);
-  const { setOrderEditorStore } = useUi.getState();
-  return (
-    <Sheet
-      open={editing !== null}
-      onOpenChange={(open) => {
-        if (!open) setOrderEditorStore(null);
-      }}
-    >
-      {/* The sheet's own classes are `data-[side=bottom]:…`, so sizes must use the
-          same prefix to take effect. */}
-      <SheetContent
-        side="bottom"
-        className="gap-0 rounded-t-2xl data-[side=bottom]:mx-auto data-[side=bottom]:h-[88dvh] data-[side=bottom]:max-w-xl"
-      >
-        <SheetHeader>
-          <SheetTitle className="text-[20px] font-semibold">Butikens ordning</SheetTitle>
-          <SheetDescription className="text-[13px] text-ink-2">
-            Dra avdelningarna i den ordning du går förbi dem. Sparas direkt.
-          </SheetDescription>
-        </SheetHeader>
-        {editing !== null && <StoreOrderPanel storeId={editing} onStore={setOrderEditorStore} />}
-      </SheetContent>
-    </Sheet>
   );
 }

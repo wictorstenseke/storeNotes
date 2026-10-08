@@ -2,6 +2,7 @@ import { CheckIcon } from 'lucide-react';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import type { Item } from '../domain/types';
 import { MOTION } from './motion';
+import { Button } from '@/components/ui/button';
 
 type Props = { items: Item[]; onUncheck(id: string): void; onClear(): void };
 
@@ -18,19 +19,19 @@ export function DoneGroup({ items, onUncheck, onClear }: Props) {
             role="checkbox"
             aria-checked
             aria-label={`Avmarkera ${item.text}`}
-            className="flex min-h-9 w-full items-start gap-2.5 px-4 text-left"
+            className="flex min-h-[30px] w-full items-start gap-2.5 px-5 text-left"
             onClick={() => onUncheck(item.id)}
           >
-            <span className="mt-[7px] grid size-[22px] shrink-0 place-items-center rounded-full bg-notes text-[13px] font-bold leading-none text-white">
+            <span className="mt-1 grid size-[22px] shrink-0 place-items-center rounded-full bg-notes text-[13px] font-bold leading-none text-white">
               <CheckIcon className="size-3.5" strokeWidth={3} />
             </span>
-            <span className="py-[8px] text-[14px] leading-5 text-ink-2">{item.text}</span>
+            <span className="py-[5px] text-[14px] leading-5 text-ink-2">{item.text}</span>
           </button>
         ))}
       </div>
-      <button type="button" className="ml-[50px] mt-1 text-[13px] text-notes-ink" onClick={onClear}>
+      <Button variant="outline" size="sm" className="ml-[54px] mt-2" onClick={onClear}>
         Rensa klara
-      </button>
+      </Button>
     </div>
   );
 }

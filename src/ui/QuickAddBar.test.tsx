@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { sortOpen } from '../domain/sort';
 import { NoteStoreProvider } from '../state/context';
 import { readSetting } from '../state/deviceSettings';
@@ -63,6 +63,16 @@ describe('QuickAddBar', () => {
     await user.paste('Milk, Eggs');
     await user.keyboard('{Enter}');
     expect(screen.getByRole('button', { name: '2 tillagda' })).toBeInTheDocument();
+  });
+
+  it('focuses itself on press without letting the page scroll to it', async () => {
+    await setup();
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    expect(fireEvent.mouseDown(field())).toBe(false);
+    expect(document.activeElement).toBe(field());
+    await waitFor(() => expect(field().style.transform).toBe(''));
+    expect(scrollTo).toHaveBeenCalled();
+    scrollTo.mockRestore();
   });
 
   it('adds nothing for whitespace', async () => {

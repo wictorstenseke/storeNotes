@@ -18,7 +18,7 @@ beforeEach(() => {
     storeId: null,
     quickAddSectionId: null,
     selection: null,
-    orderEditorStore: null,
+    hiddenStoreHints: [],
   });
 });
 
@@ -85,7 +85,7 @@ describe('editing', () => {
   it('removes an empty line when it loses focus', async () => {
     const { store, user } = await setup(seedAC);
     await user.type(fields()[0], '{Enter}');
-    await user.click(screen.getByRole('textbox', { name: 'Listans namn' }));
+    await user.click(screen.getByRole('textbox', { name: 'Listrubrik' }));
     expect(lines()).toEqual(['A', 'C']);
     expect(store.getState().items).toHaveLength(2);
   });
@@ -152,6 +152,7 @@ describe('store order', () => {
     expect(lines()).toEqual(['Ice', 'Milk', 'New', 'Apple']);
     const grocery = screen.getByRole('region', { name: 'Grocery List' });
     expect(within(grocery).queryByText(STORE.name)).toBeNull();
+    expect(within(grocery).getByText('Ingen butik vald')).toBeInTheDocument();
     await chooseStore(user, STORE.name);
     expect(lines()).toEqual(['New', ...inStoreOrder]);
     // The chosen store is named beside the menu button, since the menu is closed.
@@ -159,6 +160,17 @@ describe('store order', () => {
     await chooseStore(user, 'Ingen butik');
     expect(lines()).toEqual(['Ice', 'Milk', 'New', 'Apple']);
     expect(within(grocery).queryByText(STORE.name)).toBeNull();
+    expect(within(grocery).getByText('Ingen butik vald')).toBeInTheDocument();
+  });
+
+  it('hides and shows the store text from the menu, per list', async () => {
+    const { user } = await setup(seedAC);
+    const grocery = screen.getByRole('region', { name: 'Grocery List' });
+    await user.click(screen.getByRole('button', { name: 'Alternativ för Grocery List' }));
+    await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Dölj fält' }));
+    await waitFor(() => expect(within(grocery).queryByText('Ingen butik vald')).toBeNull());
+    await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Dölj fält' }));
+    expect(await within(grocery).findByText('Ingen butik vald')).toBeInTheDocument();
   });
 
   it('records the chosen store on a checked item', async () => {
@@ -179,7 +191,7 @@ describe('store order', () => {
     expect(sections.find((s) => s.title === 'Gifts')?.store_sort).toBe(false);
     await user.click(screen.getByRole('button', { name: 'Alternativ för Gifts' }));
     expect(await screen.findByRole('menuitemradio', { name: 'Ingen butik' })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.queryByRole('menuitemcheckbox')).toBeNull();
+    expect(screen.queryByRole('menuitemcheckbox', { name: 'Sortera efter butik' })).toBeNull();
   });
 
   it('has no row of store buttons under the section title', async () => {
@@ -188,12 +200,33 @@ describe('store order', () => {
   });
 });
 
+describe('empty state', () => {
+  it('invites to create the first list when there are none', async () => {
+    const { store, sectionId, user } = await setup();
+    act(() => {
+      store.getState().deleteSection(sectionId);
+    });
+    expect(screen.getByText('Inga listor än')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '+ Ny lista' })).toBeNull();
+    expect(screen.queryByRole('textbox', { name: 'Lägg till vara' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Skapa lista' }));
+    expect(store.getState().sections).toHaveLength(1);
+    expect(screen.queryByText('Inga listor än')).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Listrubrik' }));
+  });
+
+  it('is not shown while there are lists', async () => {
+    await setup();
+    expect(screen.queryByText('Inga listor än')).toBeNull();
+  });
+});
+
 describe('sections', () => {
   it('adds a section and focuses its title', async () => {
     const { store, user } = await setup();
     await user.click(screen.getByRole('button', { name: '+ Ny lista' }));
     expect(store.getState().sections).toHaveLength(2);
-    const titles = screen.getAllByRole('textbox', { name: 'Listans namn' });
+    const titles = screen.getAllByRole('textbox', { name: 'Listrubrik' });
     expect(document.activeElement).toBe(titles[1]);
     await user.keyboard('Gifts');
     await user.tab();
@@ -334,10 +367,18 @@ describe('selecting several items', () => {
 
 describe('editing the store order', () => {
   const openEditor = async (user: ReturnType<typeof userEvent.setup>) => {
-    await user.click(screen.getByRole('button', { name: 'Inställningar' }));
+    await user.click(screen.getByRole('button', { name: 'Meny' }));
     await user.click(await screen.findByRole('button', { name: 'Ändra butikens gångar' }));
     return screen.findByRole('dialog', { name: 'Butikens ordning' });
   };
+
+  it('goes back to the settings', async () => {
+    const { user } = await setup(seedAC, true);
+    const dialog = await openEditor(user);
+    await user.click(within(dialog).getByRole('button', { name: 'Tillbaka' }));
+    expect(await screen.findByRole('dialog', { name: 'Inställningar' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Butikens ordning' })).toBeNull());
+  });
 
   it('opens for the first store when no store is chosen', async () => {
     const { user } = await setup(seedAC, true);

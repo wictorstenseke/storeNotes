@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 export type Invite = { list_id: string; invited_by: string };
 
@@ -65,7 +66,7 @@ export function InviteBanner({ loadInvites, sections, onAccept, onDecline }: Pro
 
   if (choosing) {
     return (
-      <div role="status" aria-label="Inbjudan" className="mx-4 mt-2 flex flex-col gap-2 text-[14px]">
+      <div role="status" aria-label="Inbjudan" className="mx-5 mt-2 flex flex-col gap-2 text-[14px]">
         <p>
           Vilka av dina listor vill du ta med dig?{' '}
           <span className="text-ink-2">De följer med som de är. Resten tas bort från den här enheten.</span>
@@ -86,35 +87,27 @@ export function InviteBanner({ loadInvites, sections, onAccept, onDecline }: Pro
             </li>
           ))}
         </ul>
-        <div className="flex gap-4">
-          <button
-            type="button"
-            className="font-semibold text-notes-ink"
-            onClick={() => onAccept(invite.list_id, keep ?? [])}
-          >
-            Gå med
-          </button>
-          <button type="button" className="text-ink-2" onClick={() => setChoosing(false)}>
+        <div className="flex gap-2">
+          <Button onClick={() => onAccept(invite.list_id, keep ?? [])}>Gå med</Button>
+          <Button variant="outline" onClick={() => setChoosing(false)}>
             Tillbaka
-          </button>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div role="status" aria-label="Inbjudan" className="mx-4 mt-2 flex flex-col gap-1 text-[14px]">
+    <div role="status" aria-label="Inbjudan" className="mx-5 mt-2 flex flex-col gap-1 text-[14px]">
       <p>
         {invite.invited_by} har bjudit in dig att dela sin lista.{' '}
         <span className="text-ink-2">Om du går med byter du till den. Du väljer själv vilka av dina listor som följer med.</span>
       </p>
-      <div className="flex gap-4">
-        <button type="button" className="font-semibold text-notes-ink" onClick={start}>
-          Gå med
-        </button>
-        <button type="button" className="text-ink-2" onClick={() => void decline()}>
+      <div className="flex gap-2">
+        <Button onClick={start}>Gå med</Button>
+        <Button variant="outline" onClick={() => void decline()}>
           Avböj
-        </button>
+        </Button>
       </div>
     </div>
   );

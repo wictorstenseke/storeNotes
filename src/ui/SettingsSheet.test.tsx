@@ -1,16 +1,13 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { SettingsPanel, type Person } from './SettingsSheet';
+import { InviteForm, SettingsPanel, SettingsSheet, type Person } from './SettingsSheet';
 
-function setup(inviteResult = true) {
+function setup() {
   const people: Person[] = [{ email: 'anna@example.com', pending: false }];
   const props = {
     loadPeople: vi.fn(async () => [...people]),
-    invite: vi.fn(async (email: string) => {
-      if (inviteResult) people.push({ email, pending: true });
-      return inviteResult;
-    }),
+    onInvite: vi.fn(),
     onSignOut: vi.fn(),
     onEditOrder: vi.fn(),
   };
@@ -24,50 +21,23 @@ describe('SettingsPanel', () => {
     expect(await screen.findByText('anna@example.com')).toBeInTheDocument();
   });
 
-  it('shows the invite form only in its own sheet', async () => {
-    const { user } = setup();
-    expect(screen.queryByLabelText('E-post')).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Bjud in' }));
-    expect(await screen.findByLabelText('E-post')).toBeInTheDocument();
-  });
-
-  it('invites a normalised email, closes the sheet and shows it as pending', async () => {
-    const { props, user } = setup();
-    await user.click(screen.getByRole('button', { name: 'Bjud in' }));
-    await user.type(await screen.findByLabelText('E-post'), ' Bo@Example.com{Enter}');
-    expect(props.invite).toHaveBeenCalledWith('bo@example.com');
-    await waitFor(() => expect(screen.queryByLabelText('E-post')).toBeNull());
-    expect(await screen.findByText('bo@example.com')).toBeInTheDocument();
-    expect(screen.getByText('Inbjuden')).toBeInTheDocument();
-  });
-
-  it('rejects an invalid email and keeps the sheet open', async () => {
-    const { props, user } = setup();
-    await user.click(screen.getByRole('button', { name: 'Bjud in' }));
-    await user.type(await screen.findByLabelText('E-post'), 'bo{Enter}');
-    expect(screen.getByRole('alert')).toHaveTextContent('Ange en giltig e-postadress.');
-    expect(props.invite).not.toHaveBeenCalled();
-  });
-
-  it('explains a failed invite', async () => {
-    const { user } = setup(false);
-    await user.click(screen.getByRole('button', { name: 'Bjud in' }));
-    await user.type(await screen.findByLabelText('E-post'), 'bo@example.com{Enter}');
-    expect(await screen.findByRole('alert')).toHaveTextContent('Kunde inte spara inbjudan.');
-    expect(screen.getByLabelText('E-post')).toBeInTheDocument();
-  });
-
   it('shows already known people without waiting for the load', () => {
     render(
       <SettingsPanel
         loadPeople={() => new Promise(() => {})}
         initialPeople={[{ email: 'anna@example.com', pending: false }]}
-        invite={vi.fn()}
+        onInvite={vi.fn()}
         onSignOut={vi.fn()}
         onEditOrder={vi.fn()}
       />,
     );
     expect(screen.getByText('anna@example.com')).toBeInTheDocument();
+  });
+
+  it('asks to invite', async () => {
+    const { props, user } = setup();
+    await user.click(screen.getByRole('button', { name: 'Bjud in' }));
+    expect(props.onInvite).toHaveBeenCalledTimes(1);
   });
 
   it('opens the order editor', async () => {
@@ -80,5 +50,105 @@ describe('SettingsPanel', () => {
     const { props, user } = setup();
     await user.click(screen.getByRole('button', { name: 'Logga ut' }));
     expect(props.onSignOut).toHaveBeenCalledTimes(1);
+  });
+});
+
+function setupInvite(inviteResult = true) {
+  const props = {
+    invite: vi.fn(async () => inviteResult),
+    onInvited: vi.fn(),
+    keyboardInset: 0,
+  };
+  render(<InviteForm {...props} />);
+  return { props, user: userEvent.setup() };
+}
+
+describe('InviteForm', () => {
+  it('invites a normalised email and reports it', async () => {
+    const { props, user } = setupInvite();
+    await user.type(screen.getByLabelText('E-post'), ' Bo@Example.com{Enter}');
+    expect(props.invite).toHaveBeenCalledWith('bo@example.com');
+    await waitFor(() => expect(props.onInvited).toHaveBeenCalledTimes(1));
+  });
+
+  it('rejects an invalid email', async () => {
+    const { props, user } = setupInvite();
+    await user.type(screen.getByLabelText('E-post'), 'bo{Enter}');
+    expect(screen.getByRole('alert')).toHaveTextContent('Ange en giltig e-postadress.');
+    expect(props.invite).not.toHaveBeenCalled();
+    expect(props.onInvited).not.toHaveBeenCalled();
+  });
+
+  it('explains a failed invite', async () => {
+    const { props, user } = setupInvite(false);
+    await user.type(screen.getByLabelText('E-post'), 'bo@example.com{Enter}');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Kunde inte spara inbjudan.');
+    expect(props.onInvited).not.toHaveBeenCalled();
+  });
+});
+
+describe('SettingsSheet', () => {
+  const open = async () => {
+    const user = userEvent.setup();
+    const invite = vi.fn(async () => true);
+    render(<SettingsSheet loadPeople={async () => []} invite={invite} onSignOut={vi.fn()} />);
+    await user.click(screen.getByRole('button', { name: 'Meny' }));
+    return { user, invite };
+  };
+
+  it('moves to the invite view and back inside one sheet', async () => {
+    const { user } = await open();
+    await user.click(await screen.findByRole('button', { name: 'Bjud in' }));
+    expect(await screen.findByLabelText('E-post')).toBeInTheDocument();
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: 'Logga ut' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Tillbaka' }));
+    expect(await screen.findByRole('button', { name: 'Logga ut' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('E-post')).toBeNull();
+  });
+
+  it('returns to the settings after inviting', async () => {
+    const { user, invite } = await open();
+    await user.click(await screen.findByRole('button', { name: 'Bjud in' }));
+    await user.type(await screen.findByLabelText('E-post'), 'bo@example.com{Enter}');
+    expect(invite).toHaveBeenCalledWith('bo@example.com');
+    expect(await screen.findByRole('button', { name: 'Logga ut' })).toBeInTheDocument();
+  });
+
+  it('always opens on the settings view', async () => {
+    const { user } = await open();
+    await user.click(await screen.findByRole('button', { name: 'Bjud in' }));
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await user.click(screen.getByRole('button', { name: 'Meny' }));
+    expect(await screen.findByRole('button', { name: 'Logga ut' })).toBeInTheDocument();
+  });
+
+  it('extends under the keyboard instead of floating above it', async () => {
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+    Object.defineProperty(window, 'visualViewport', {
+      value: { height: 500, offsetTop: 0, addEventListener() {}, removeEventListener() {} },
+      configurable: true,
+    });
+    try {
+      const { user } = await open();
+      await user.click(await screen.findByRole('button', { name: 'Bjud in' }));
+      await screen.findByLabelText('E-post');
+      await waitFor(() => expect(screen.getByRole('dialog').style.paddingBottom).toBe('300px'));
+      expect(screen.getByRole('dialog').style.bottom).toBe('');
+    } finally {
+      Object.defineProperty(window, 'visualViewport', { value: undefined, configurable: true });
+    }
+  });
+
+  it('keeps focus in the email field when pressing back or close', async () => {
+    const { user } = await open();
+    await user.click(await screen.findByRole('button', { name: 'Bjud in' }));
+    const field = await screen.findByLabelText('E-post');
+    for (const name of ['Tillbaka', 'Stäng']) {
+      const pressed = fireEvent.mouseDown(screen.getByRole('button', { name }));
+      expect(pressed).toBe(false);
+    }
+    expect(field).toBeInTheDocument();
   });
 });

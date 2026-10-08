@@ -62,6 +62,9 @@ function SheetContent({
         {showCloseButton && (
           <SheetPrimitive.Close
             data-slot="sheet-close"
+            // A press must not take focus from a field: the keyboard would close first,
+            // the sheet would move under the finger and the tap would be lost.
+            onMouseDown={(event) => event.preventDefault()}
             render={
               <Button
                 variant="ghost"

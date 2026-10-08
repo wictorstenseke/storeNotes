@@ -78,7 +78,7 @@ export function ItemLine(props: ItemLineProps) {
 
   return (
     <div
-      className="flex min-h-9 items-start gap-2.5 px-4"
+      className="flex min-h-[30px] items-start gap-2.5 px-5"
       data-item-id={item.id}
       onClick={(event) => {
         // Shift- and Cmd-click select lines; they must not start editing one.
@@ -91,7 +91,7 @@ export function ItemLine(props: ItemLineProps) {
         role="checkbox"
         aria-checked={false}
         aria-label={`Markera ${item.text}`}
-        className="mt-[7px] size-[22px] shrink-0 rounded-full border-[1.5px] border-line"
+        className="mt-1 size-[22px] shrink-0 rounded-full border-[1.5px] border-line"
         onClick={(event) => {
           event.stopPropagation();
           toggle();
@@ -104,7 +104,7 @@ export function ItemLine(props: ItemLineProps) {
         aria-label="Vara"
         autoCapitalize="sentences"
         enterKeyHint="next"
-        className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-[7px] text-[16px] leading-[22px] caret-notes-ink outline-none"
+        className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-1 text-[16px] leading-[22px] caret-notes-ink outline-none"
         onChange={(event) => {
           dirty.current = true;
           setDraft(event.target.value.replace(/\s*[\r\n]+\s*/g, ' '));
