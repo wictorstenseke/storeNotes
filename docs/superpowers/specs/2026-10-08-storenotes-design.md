@@ -67,13 +67,13 @@ Assumptions:
 - An input bar is pinned to the bottom of the screen and stays above the on-screen keyboard.
 - Type and press Enter (or tap `Add`): the item is added, the field clears and stays focused.
 - The field is a rounded, lightly filled field so it reads as the place to type. `Add` is a yellow button beside it, dimmed while there is nothing to add.
-- A chip at the left end of the field shows the target section. It defaults to the section last added to on this device, and tapping it switches section.
+- A small label above the field shows the target section. It defaults to the section last added to on this device, and tapping it switches section.
 - Text containing commas or line breaks adds one item per part. Empty parts are ignored.
 - Quick-added items go to the end of the target section's manual order.
 
 ### Stores and sorted view
 
-- Stores are defined in `src/domain/stores.ts`. Each has an id, a name, the layout description as written by Wictor (kept as a comment for reference), and a baseline category order: the full category list in walking order.
+- The two stores are Willys and ICA. Stores are defined in `src/domain/stores.ts`. Each has an id, a name, the layout description as written by Wictor (kept as a comment for reference), and a baseline category order: the full category list in walking order.
 - Wictor supplies the layout text for the two stores; the baseline order is written from it during implementation. Until then two example stores are used so the feature can be built and tested.
 - The store is chosen in the section's `⋯` menu, top right of the section. In a section with store sort on, the menu lists `No store` and the two stores above its other entries. The chosen store's name is shown in small grey text beside the `⋯` button, since the menu itself is closed.
 - The selected store is stored per device, not synced. One person can view store order while the other sees manual order.

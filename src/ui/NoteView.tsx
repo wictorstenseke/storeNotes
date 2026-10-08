@@ -16,7 +16,7 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
   };
 
   return (
-    <main className="mx-auto flex min-h-full max-w-xl flex-col pb-28 pt-[env(safe-area-inset-top)]">
+    <main className="mx-auto flex min-h-full max-w-xl flex-col pb-36 pt-[env(safe-area-inset-top)]">
       <header className="flex h-11 items-center justify-end gap-3 px-4">{header}</header>
       {banner}
       {sorted.map((section) => (

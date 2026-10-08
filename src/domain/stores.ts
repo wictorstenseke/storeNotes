@@ -2,11 +2,12 @@ import type { Category } from './categories';
 
 export type StoreDef = { id: string; name: string; baseline: Category[] };
 
-// Example layouts. Task 15 replaces these with the two real stores.
+// The category orders below are still examples. They are replaced with the
+// real walking order once the layout of each store has been described.
 export const STORES: StoreDef[] = [
   {
-    id: 'store-a',
-    name: 'Store A',
+    id: 'willys',
+    name: 'Willys',
     baseline: [
       'produce', 'bakery', 'deli', 'cheese', 'meat', 'fish', 'dairy', 'eggs',
       'frozen', 'pantry', 'pasta_rice', 'canned', 'baking', 'spices_sauces',
@@ -15,8 +16,8 @@ export const STORES: StoreDef[] = [
     ],
   },
   {
-    id: 'store-b',
-    name: 'Store B',
+    id: 'ica',
+    name: 'ICA',
     baseline: [
       'bakery', 'produce', 'dairy', 'eggs', 'cheese', 'deli', 'meat', 'fish',
       'pantry', 'pasta_rice', 'canned', 'spices_sauces', 'baking', 'breakfast',
