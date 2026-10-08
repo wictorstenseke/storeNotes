@@ -52,8 +52,8 @@ function SectionTitle({ title, wantFocus, onFocused, onCommit, onEnter }: TitleP
     <input
       ref={field}
       value={draft}
-      aria-label="Sektionens namn"
-      placeholder="Sektion"
+      aria-label="Listans namn"
+      placeholder="Lista"
       enterKeyHint="next"
       className="min-w-0 flex-1 bg-transparent text-[20px] font-semibold leading-7 caret-notes-ink outline-none placeholder:text-ink-2"
       onChange={(event) => setDraft(event.target.value)}
@@ -277,7 +277,7 @@ export function SectionView({ section }: { section: Section }) {
   });
 
   return (
-    <section className="mt-5" aria-label={section.title || 'Namnlös sektion'}>
+    <section className="mt-5" aria-label={section.title || 'Namnlös lista'}>
       <div className="flex items-center gap-2 px-4">
         <SectionTitle
           title={section.title}
@@ -294,8 +294,11 @@ export function SectionView({ section }: { section: Section }) {
           title={section.title}
           storeSort={section.store_sort}
           storeId={storeId}
-          onStoreSort={(on) => note.setStoreSort(section.id, on)}
-          onStore={ui.setStoreId}
+          onStore={(id) => {
+            // The store is per device, whether to sort by it is per list.
+            if (id) ui.setStoreId(id);
+            note.setStoreSort(section.id, id !== null);
+          }}
           onDelete={() => note.deleteSection(section.id)}
         />
       </div>
@@ -340,7 +343,7 @@ export function SectionView({ section }: { section: Section }) {
       </div>
       <button
         type="button"
-        aria-label={`Lägg till vara i ${section.title || 'sektionen'}`}
+        aria-label={`Lägg till vara i ${section.title || 'listan'}`}
         className="block h-9 w-full"
         onClick={() => startLine(null, open.length)}
       />

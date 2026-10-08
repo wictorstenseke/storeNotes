@@ -1,3 +1,4 @@
+import { CheckIcon } from 'lucide-react';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import type { Item } from '../domain/types';
 import { MOTION } from './motion';
@@ -21,7 +22,7 @@ export function DoneGroup({ items, onUncheck, onClear }: Props) {
             onClick={() => onUncheck(item.id)}
           >
             <span className="mt-[7px] grid size-[22px] shrink-0 place-items-center rounded-full bg-notes text-[13px] font-bold leading-none text-white">
-              ✓
+              <CheckIcon className="size-3.5" strokeWidth={3} />
             </span>
             <span className="py-[8px] text-[14px] leading-5 text-ink-2">{item.text}</span>
           </button>

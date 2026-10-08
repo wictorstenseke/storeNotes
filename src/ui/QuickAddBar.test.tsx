@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { sortOpen } from '../domain/sort';
@@ -48,6 +48,21 @@ describe('QuickAddBar', () => {
     await user.paste('Milk, Eggs\nBread');
     await user.keyboard('{Enter}');
     expect(textsIn(sectionIds[0])).toEqual(['Milk', 'Eggs', 'Bread']);
+  });
+
+  it('confirms on the button after adding, then reverts', async () => {
+    const { user } = await setup();
+    await user.type(field(), 'Milk{Enter}');
+    const button = screen.getByRole('button', { name: 'Tillagd' });
+    await waitFor(() => expect(button).toHaveTextContent('Lägg till'), { timeout: 3000 });
+  });
+
+  it('confirms the count when several items are added at once', async () => {
+    const { user } = await setup();
+    await user.click(field());
+    await user.paste('Milk, Eggs');
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('button', { name: '2 tillagda' })).toBeInTheDocument();
   });
 
   it('adds nothing for whitespace', async () => {
@@ -101,6 +116,29 @@ describe('QuickAddBar', () => {
       configurable: true,
     });
     const { container } = await setup();
-    expect((container.firstElementChild as HTMLElement).style.bottom).toBe('300px');
+    field().focus();
+    await waitFor(() =>
+      expect((container.firstElementChild as HTMLElement).style.bottom).toBe('300px'),
+    );
+  });
+
+  it('ignores a viewport/innerHeight mismatch while no field is focused', async () => {
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+    Object.defineProperty(window, 'visualViewport', {
+      value: { height: 740, offsetTop: 0, addEventListener() {}, removeEventListener() {} },
+      configurable: true,
+    });
+    const { container } = await setup();
+    expect((container.firstElementChild as HTMLElement).style.bottom).toBe('0px');
+  });
+
+  it('stays put when overscrolling past the top of the page', async () => {
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+    Object.defineProperty(window, 'visualViewport', {
+      value: { height: 800, offsetTop: -80, addEventListener() {}, removeEventListener() {} },
+      configurable: true,
+    });
+    const { container } = await setup();
+    expect((container.firstElementChild as HTMLElement).style.bottom).toBe('0px');
   });
 });

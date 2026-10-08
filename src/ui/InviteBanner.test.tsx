@@ -39,7 +39,7 @@ describe('InviteBanner', () => {
     setup();
     const banner = await screen.findByRole('status');
     expect(banner).toHaveTextContent('anna@example.com har bjudit in dig att dela sin lista.');
-    expect(banner).toHaveTextContent('Du väljer själv vilka av dina sektioner som följer med.');
+    expect(banner).toHaveTextContent('Du väljer själv vilka av dina listor som följer med.');
   });
 
   it('asks which sections to take along, with those holding items ticked', async () => {

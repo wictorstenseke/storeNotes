@@ -1,3 +1,4 @@
+import { GripVerticalIcon } from 'lucide-react';
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -45,7 +46,7 @@ function OrderRow({ category, index, onMove }: RowProps) {
           onMove(event.key === 'ArrowDown' ? 1 : -1);
         }}
       >
-        ≡
+        <GripVerticalIcon className="size-[18px]" />
       </button>
     </li>
   );
@@ -115,13 +116,21 @@ export function StoreOrderPanel({ storeId, onStore }: PanelProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div role="group" aria-label="Butik" className="flex gap-4 px-4 pb-2 text-[14px]">
+      <div
+        role="group"
+        aria-label="Butik"
+        className="mx-4 mb-2 flex gap-6 overflow-x-auto border-b border-line text-[16px]"
+      >
         {STORES.map((option) => (
           <button
             key={option.id}
             type="button"
             aria-pressed={option.id === store.id}
-            className={option.id === store.id ? 'font-semibold text-notes-ink' : 'text-ink-2'}
+            className={`-mb-px shrink-0 border-b-2 pb-2 pt-1 ${
+              option.id === store.id
+                ? 'border-notes-ink font-semibold text-notes-ink'
+                : 'border-transparent text-ink-2'
+            }`}
             onClick={() => onStore(option.id)}
           >
             {option.name}

@@ -67,7 +67,7 @@ export function InviteBanner({ loadInvites, sections, onAccept, onDecline }: Pro
     return (
       <div role="status" aria-label="Inbjudan" className="mx-4 mt-2 flex flex-col gap-2 text-[14px]">
         <p>
-          Vilka av dina sektioner vill du ta med dig?{' '}
+          Vilka av dina listor vill du ta med dig?{' '}
           <span className="text-ink-2">De följer med som de är. Resten tas bort från den här enheten.</span>
         </p>
         <ul className="flex flex-col">
@@ -106,7 +106,7 @@ export function InviteBanner({ loadInvites, sections, onAccept, onDecline }: Pro
     <div role="status" aria-label="Inbjudan" className="mx-4 mt-2 flex flex-col gap-1 text-[14px]">
       <p>
         {invite.invited_by} har bjudit in dig att dela sin lista.{' '}
-        <span className="text-ink-2">Om du går med byter du till den. Du väljer själv vilka av dina sektioner som följer med.</span>
+        <span className="text-ink-2">Om du går med byter du till den. Du väljer själv vilka av dina listor som följer med.</span>
       </p>
       <div className="flex gap-4">
         <button type="button" className="font-semibold text-notes-ink" onClick={start}>

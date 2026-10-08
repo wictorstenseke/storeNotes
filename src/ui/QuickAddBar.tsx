@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
+import { CheckIcon } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { parseQuickAdd } from '../domain/parseQuickAdd';
 import { byManual } from '../domain/sort';
 import { useNote, useNoteStore } from '../state/context';
@@ -12,6 +13,10 @@ export function QuickAddBar() {
   const field = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = useState('');
   const inset = useKeyboardInset();
+  // How many items the last submit added; shown briefly on the button as confirmation.
+  const [added, setAdded] = useState(0);
+  const clearAdded = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(clearAdded.current), []);
 
   const sorted = useMemo(() => [...sections].sort(byManual), [sections]);
   const target = sorted.find((s) => s.id === chosen) ?? sorted[0];
@@ -25,6 +30,9 @@ export function QuickAddBar() {
     useUi.getState().setQuickAddSectionId(target.id);
     setText('');
     field.current?.focus();
+    setAdded(parts.length);
+    clearTimeout(clearAdded.current);
+    clearAdded.current = setTimeout(() => setAdded(0), 1400);
   };
 
   const nextSection = () => {
@@ -52,7 +60,7 @@ export function QuickAddBar() {
         {/* Which section the next item goes to. Tap to switch. */}
         <button
           type="button"
-          aria-label={`Lägger till i ${name}. Tryck för att byta sektion`}
+          aria-label={`Lägger till i ${name}. Tryck för att byta lista`}
           className="max-w-full self-start truncate px-3.5 text-[13px] font-semibold text-notes-ink"
           onClick={nextSection}
           {...keepFocus}
@@ -85,12 +93,19 @@ export function QuickAddBar() {
           <button
             type="submit"
             aria-disabled={!canAdd}
-            className={`h-9 shrink-0 rounded-full bg-notes px-4 text-[14px] font-semibold text-black transition-opacity ${
-              canAdd ? '' : 'opacity-40'
+            className={`h-9 min-w-24 shrink-0 rounded-full bg-notes px-4 text-[14px] font-semibold text-black transition-opacity ${
+              canAdd || added > 0 ? '' : 'opacity-40'
             }`}
             {...keepFocus}
           >
-            Lägg till
+            {added > 0 ? (
+              <span className="inline-flex items-center gap-1">
+                <CheckIcon className="size-4" strokeWidth={3} />
+                {added > 1 ? `${added} tillagda` : 'Tillagd'}
+              </span>
+            ) : (
+              'Lägg till'
+            )}
           </button>
         </div>
       </form>

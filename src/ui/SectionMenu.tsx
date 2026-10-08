@@ -1,3 +1,4 @@
+import { EllipsisIcon } from 'lucide-react';
 import { useState } from 'react';
 import {
   AlertDialog,
@@ -11,7 +12,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuRadioGroup,
@@ -25,7 +25,6 @@ type Props = {
   title: string;
   storeSort: boolean;
   storeId: string | null;
-  onStoreSort(on: boolean): void;
   onStore(id: string | null): void;
   onDelete(): void;
 };
@@ -36,53 +35,42 @@ export function SectionMenu({
   title,
   storeSort,
   storeId,
-  onStoreSort,
   onStore,
   onDelete,
 }: Props) {
   const [confirming, setConfirming] = useState(false);
-  const chosen = getStore(storeId)?.id ?? NO_STORE;
+  const chosen = storeSort ? (getStore(storeId)?.id ?? NO_STORE) : NO_STORE;
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          aria-label={`Alternativ för ${title || 'sektion'}`}
-          className="shrink-0 px-1 text-[18px] leading-none text-ink-2"
+          aria-label={`Alternativ för ${title || 'lista'}`}
+          className="shrink-0 px-1 text-ink-2"
         >
-          ⋯
+          <EllipsisIcon className="size-5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-48">
-          {storeSort && (
-            <>
-              <DropdownMenuRadioGroup
-                value={chosen}
-                onValueChange={(value) => onStore(value === NO_STORE ? null : String(value))}
-              >
-                <DropdownMenuRadioItem value={NO_STORE} closeOnClick>
-                  Ingen butik
-                </DropdownMenuRadioItem>
-                {STORES.map((store) => (
-                  <DropdownMenuRadioItem key={store.id} value={store.id} closeOnClick>
-                    {store.name}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-              <DropdownMenuSeparator />
-            </>
-          )}
-          <DropdownMenuCheckboxItem
-            checked={storeSort}
-            onCheckedChange={(checked) => onStoreSort(checked === true)}
+          <DropdownMenuRadioGroup
+            value={chosen}
+            onValueChange={(value) => onStore(value === NO_STORE ? null : String(value))}
           >
-            Sortera efter butik
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuItem onClick={() => setConfirming(true)}>Ta bort sektion</DropdownMenuItem>
+            <DropdownMenuRadioItem value={NO_STORE} closeOnClick>
+              Ingen butik
+            </DropdownMenuRadioItem>
+            {STORES.map((store) => (
+              <DropdownMenuRadioItem key={store.id} value={store.id} closeOnClick>
+                {store.name}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setConfirming(true)}>Ta bort lista</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ta bort sektionen?</AlertDialogTitle>
+            <AlertDialogTitle>Ta bort listan?</AlertDialogTitle>
             <AlertDialogDescription>Alla varor i den tas också bort.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
