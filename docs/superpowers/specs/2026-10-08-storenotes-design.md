@@ -101,6 +101,31 @@ Assumptions:
 - The effective order for a store is the categories sorted by score, ties broken by baseline order.
 - Learning uses plain arithmetic, not AI.
 
+## Visual design
+
+The app should resemble Apple Notes and feel clean, simple, quick and snappy.
+
+Look:
+
+- System font (`-apple-system`, so San Francisco on iPhone). No web fonts.
+- Small, calm type. Item text is 16px, which is the smallest size iOS allows in an input without zooming the page on focus. Section titles are 20px semibold. Secondary text (Done items, hints, the offline indicator) is 13–14px. Nothing is larger than the section titles.
+- Line rows are compact, about 36px tall, with the whole row tappable so the touch target stays comfortable.
+- Plain page background with no cards, boxes or shadows around sections. Sections are separated by white space only.
+- Round checkboxes like Apple Notes: a thin grey circle when unchecked, filled with the accent colour and a checkmark when checked.
+- Done items have grey text and no strikethrough, as in Apple Notes.
+- One accent colour, the Apple Notes yellow, used for checked boxes, the text cursor, the `+` button and links. Everything else is black, white and greys.
+- Light and dark mode follow the phone's setting.
+- Controls are quiet: the store picker, section chip and section menu are small text or icon buttons, not prominent buttons.
+- shadcn components are used only for the settings sheet, menus and the confirmation dialog, and are restyled to match.
+
+Feel:
+
+- No spinners, skeletons or loading screens in the note. The list is on screen at first paint from the local copy.
+- Every tap and keystroke takes effect in the same frame; nothing waits for the network.
+- Motion is short and functional: about 150–200ms for an item moving to or from the Done group and for a re-sort when the store changes. No decorative animation.
+- Motion is turned off when the phone's Reduce Motion setting is on.
+- Changes arriving from the other person slide into place with the same short motion and never move the line being edited or steal focus.
+
 ## Categories
 
 A fixed list, shared by AI tagging and store orders:
