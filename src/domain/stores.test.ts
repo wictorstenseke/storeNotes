@@ -81,6 +81,7 @@ describe('stores', () => {
     expect(order.slice(0, 2)).toEqual(['produce', 'baby']);
     expect(order.indexOf('deli') - order.indexOf('chilled_sauces')).toBe(1);
     expect(order.indexOf('baking') - order.indexOf('spices_sauces')).toBe(1);
+    expect(order.indexOf('biscuits') - order.indexOf('bakery')).toBe(1);
     expect(order).not.toEqual(STORES[0].baseline);
   });
 

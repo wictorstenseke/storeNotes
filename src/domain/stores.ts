@@ -64,6 +64,7 @@ const ICA: Category[] = [
   'spices_sauces',
   'baking', // corrected: same aisle as the ketchup
   'bakery',
+  'biscuits', // corrected: right after the bread
   'breakfast', // guess: by the bread
   'coffee_tea',
   'frozen',
@@ -74,7 +75,6 @@ const ICA: Category[] = [
   'household',
   'pet',
   'other', // guess
-  'biscuits', // guess: by the sweets
   'candy',
   'frozen_sweet',
   'beverages',
