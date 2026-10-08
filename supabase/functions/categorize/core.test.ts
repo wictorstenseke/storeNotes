@@ -141,6 +141,18 @@ describe('parseModelContent', () => {
 });
 
 describe('buildPrompt', () => {
+  it('explains where the look-alike categories differ', () => {
+    const { system } = buildPrompt(['kebabsås']);
+    const line = (category: string) => system.split('\n').find((l) => l.startsWith(`- ${category}:`)) ?? '';
+    expect(line('chilled_sauces')).toContain('kebabsås');
+    expect(line('chilled_sauces')).toContain('bearnaise');
+    expect(line('spices_sauces')).toContain('ketchup');
+    expect(line('frozen_sweet')).toContain('glass');
+    expect(line('frozen_sweet')).toContain('frysta bär');
+    expect(line('frozen')).toMatch(/not ice cream/i);
+    for (const category of CATEGORIES) expect(line(category)).not.toBe('');
+  });
+
   it('names every category and numbers the items', () => {
     const { system, user } = buildPrompt(['mjölk', 'äpple']);
     for (const category of CATEGORIES) expect(system).toContain(category);

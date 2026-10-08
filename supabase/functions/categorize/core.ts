@@ -77,14 +77,47 @@ export async function categorize(
   return result;
 }
 
+// What belongs in each category. The examples matter most where two
+// categories look alike but sit in different parts of the store.
+const CATEGORY_HINTS: Record<Category, string> = {
+  produce: 'frukt, grönsaker, färska örter, potatis',
+  bakery: 'bröd, bullar, tortilla',
+  dairy: 'mjölk, fil, yoghurt, grädde, smör, crème fraiche',
+  cheese: 'ost, riven ost, färskost, fetaost',
+  eggs: 'ägg',
+  meat: 'kött, färs, kyckling, korv, bacon',
+  fish: 'färsk fisk, lax, räkor, skaldjur (not frozen)',
+  deli: 'pålägg, skinka, salami, leverpastej, färdigsallader',
+  chilled_sauces:
+    'sauces kept in the fridge next to the cold cuts: kebabsås, bearnaise, aioli, tzatziki, vitlökssås, hamburgerdressing',
+  frozen: 'frozen food: fryst fisk, frysta grönsaker, pizza, pommes, färdigrätter (not ice cream, not frozen berries or fruit)',
+  frozen_sweet: 'the dessert freezer: glass, isglass, frysta bär, fryst frukt',
+  pantry: 'olja, vinäger, nötter, bönor, linser, buljong, torrvaror',
+  pasta_rice: 'pasta, ris, nudlar, couscous, bulgur',
+  canned: 'konserver: krossade tomater, majs, bönor på burk, tonfisk på burk, kokosmjölk',
+  baking: 'mjöl, socker, bakpulver, jäst, vaniljsocker, choklad för bakning',
+  spices_sauces:
+    'kryddor, salt, and sauces from the shelf: ketchup, senap, soja, sweet chili, tacosås, pastasås',
+  breakfast: 'flingor, müsli, gröt, havregryn, sylt, honung',
+  snacks: 'chips, popcorn, nötter som snacks, kex',
+  candy: 'godis, choklad, tuggummi',
+  beverages: 'läsk, juice, vatten, öl, saft, energidryck',
+  coffee_tea: 'kaffe, te, oboy',
+  household: 'städ, diskmedel, tvättmedel, toalettpapper, hushållspapper, påsar, ljus',
+  personal_care: 'tvål, schampo, tandkräm, deodorant, plåster',
+  baby: 'blöjor, barnmat, våtservetter',
+  pet: 'kattmat, hundmat, kattsand',
+  other: 'anything that is not a grocery or household product',
+};
+
 export function buildPrompt(texts: string[]): { system: string; user: string } {
   const system = [
     'You sort shopping-list items into supermarket categories.',
     'Items may be written in Swedish or English.',
-    `Allowed categories: ${CATEGORIES.join(', ')}.`,
-    'Use "other" for anything that is not a grocery or household product.',
+    'Categories, with examples of what belongs in each:',
+    ...CATEGORIES.map((category) => `- ${category}: ${CATEGORY_HINTS[category]}`),
     'Reply with JSON only, in the form {"categories": ["...", "..."]}:',
-    'exactly one category per item, in the same order as the items.',
+    'exactly one category name per item, in the same order as the items.',
   ].join('\n');
   const user = texts.map((text, index) => `${index + 1}. ${text}`).join('\n');
   return { system, user };
