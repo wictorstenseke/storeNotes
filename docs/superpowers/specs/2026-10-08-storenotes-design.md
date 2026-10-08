@@ -120,7 +120,7 @@ Every store's baseline order lists all of them.
 - Dexie (IndexedDB) for the local copy and outbox.
 - `fractional-indexing` for item and section positions.
 - Supabase: Auth, Postgres with row-level security, Realtime, one Edge Function.
-- Claude Haiku 5.5 (`claude-haiku-5-5`) for categorisation.
+- OpenRouter for categorisation, using Claude Haiku 5.5 by default.
 - Static hosting on Vercel.
 
 ### Units
@@ -229,10 +229,13 @@ Edge Function `categorize`:
 
 - Request: `{ texts: string[] }`, at most 50 texts. Requires a signed-in user whose email is in `ALLOWED_EMAILS`.
 - For each text it computes `text_key` and looks it up in `category_cache`.
-- Texts not in the cache are sent to Claude Haiku 5.5 in one call, with the category list and an instruction to return exactly one category per text. The prompt states that items may be in Swedish or English. Structured output constrains the answer to the category list.
-- New results are written to `category_cache`.
+- Texts not in the cache are sent in one call to OpenRouter's chat completions endpoint (`https://openrouter.ai/api/v1/chat/completions`), with the category list and an instruction to return exactly one category per text. The prompt states that items may be in Swedish or English.
+- The request asks for JSON output matching a schema. The function does not rely on that: it validates the reply itself, and any text with a missing or unknown category is returned as `other` and not cached, so it is tried again next time.
+- New valid results are written to `category_cache`.
 - Response: `{ categories: Record<string, Category> }`, keyed by the original text.
-- The Anthropic API key is a Supabase secret and never reaches the client.
+- Two Supabase secrets, neither of which reaches the client:
+  - `OPENROUTER_API_KEY`: Wictor's OpenRouter key.
+  - `OPENROUTER_MODEL`: the OpenRouter model id. It defaults to Claude Haiku 5.5; the exact id is taken from OpenRouter's model list during implementation. Changing the secret switches model with no code change.
 
 Client side (`categorizer.ts`):
 
@@ -274,7 +277,7 @@ Component tests (React Testing Library):
 Backend tests (local Supabase):
 
 - Access rules: a member can read and write; a non-member cannot; `accept_invites()` grants membership only for a matching email.
-- `categorize`: cache hit skips the model call; non-allowed email is refused; more than 50 texts is refused.
+- `categorize`, with OpenRouter stubbed: cache hit skips the model call; an unknown category in the reply becomes `other` and is not cached; non-allowed email is refused; more than 50 texts is refused.
 
 Manual pass on iPhone (installed to home screen):
 
