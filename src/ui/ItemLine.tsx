@@ -1,0 +1,107 @@
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import type { Item } from '../domain/types';
+
+export type ItemLineProps = {
+  item: Item;
+  wantFocus: boolean;
+  onFocused(): void;
+  onFocus(): void;
+  onBlur(text: string): void;
+  onEnter(text: string): void;
+  onBackspaceEmpty(): void;
+  onArrow(dir: -1 | 1): void;
+  onToggle(): void;
+};
+
+export function ItemLine(props: ItemLineProps) {
+  const { item, wantFocus } = props;
+  const field = useRef<HTMLTextAreaElement>(null);
+  const editing = useRef(false);
+  const [draft, setDraft] = useState(item.text);
+
+  // Take changes from outside only while the line is not being edited.
+  useEffect(() => {
+    if (!editing.current) setDraft(item.text);
+  }, [item.text]);
+
+  // Grow with the content so long text wraps instead of scrolling sideways.
+  useLayoutEffect(() => {
+    const el = field.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [draft]);
+
+  // A layout effect runs inside the tap or key handler that asked for focus,
+  // which is what lets iOS keep the keyboard open.
+  useLayoutEffect(() => {
+    const el = field.current;
+    if (!wantFocus || !el) return;
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
+    props.onFocused();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantFocus]);
+
+  const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.nativeEvent.isComposing) return;
+    const el = event.currentTarget;
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      props.onEnter(draft);
+    } else if (event.key === 'Backspace' && draft === '') {
+      event.preventDefault();
+      props.onBackspaceEmpty();
+    } else if (event.key === 'ArrowUp' && el.selectionStart === 0 && el.selectionEnd === 0) {
+      event.preventDefault();
+      props.onArrow(-1);
+    } else if (event.key === 'ArrowDown' && el.selectionStart === draft.length) {
+      event.preventDefault();
+      props.onArrow(1);
+    }
+  };
+
+  const toggle = () => {
+    if (editing.current) field.current?.blur();
+    props.onToggle();
+  };
+
+  return (
+    <div
+      className="flex min-h-9 items-start gap-2.5 px-4"
+      data-item-id={item.id}
+      onClick={() => field.current?.focus()}
+    >
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={false}
+        aria-label={`Check ${item.text}`}
+        className="mt-[7px] size-[22px] shrink-0 rounded-full border-[1.5px] border-line"
+        onClick={(event) => {
+          event.stopPropagation();
+          toggle();
+        }}
+      />
+      <textarea
+        ref={field}
+        rows={1}
+        value={draft}
+        aria-label="Item"
+        autoCapitalize="sentences"
+        enterKeyHint="next"
+        className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-[7px] text-[16px] leading-[22px] caret-notes-ink outline-none"
+        onChange={(event) => setDraft(event.target.value.replace(/\s*[\r\n]+\s*/g, ' '))}
+        onKeyDown={onKeyDown}
+        onFocus={() => {
+          editing.current = true;
+          props.onFocus();
+        }}
+        onBlur={() => {
+          editing.current = false;
+          props.onBlur(draft);
+        }}
+      />
+    </div>
+  );
+}
