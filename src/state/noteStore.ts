@@ -1,6 +1,7 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type { Category } from '../domain/categories';
 import { learnFromDone } from '../domain/learning';
+import { newId as defaultNewId } from '../domain/newId';
 import { positionBetween } from '../domain/position';
 import { byManual, sortOpen } from '../domain/sort';
 import { STORES, type StoreDef } from '../domain/stores';
@@ -51,7 +52,7 @@ type Op = Omit<Mutation, 'seq'>;
 export function createNoteStore(deps: NoteDeps): NoteStore {
   const { db, outbox } = deps;
   const now = deps.now ?? (() => new Date().toISOString());
-  const newId = deps.newId ?? (() => crypto.randomUUID());
+  const newId = deps.newId ?? defaultNewId;
   const stores = deps.stores ?? STORES;
 
   // All IndexedDB work runs through one queue so reads never overtake writes.
