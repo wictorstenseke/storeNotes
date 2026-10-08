@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from 'react';
 import { byManual } from '../domain/sort';
 import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
+import { QuickAddBar } from './QuickAddBar';
 import { SectionView } from './SectionView';
 
 export function NoteView({ header }: { header?: ReactNode }) {
@@ -27,6 +28,7 @@ export function NoteView({ header }: { header?: ReactNode }) {
       >
         + New section
       </button>
+      <QuickAddBar />
     </main>
   );
 }
