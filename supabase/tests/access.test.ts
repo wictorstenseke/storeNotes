@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const url = process.env.API_URL!;
 const anonKey = (process.env.ANON_KEY ?? process.env.PUBLISHABLE_KEY)!;
@@ -12,10 +12,13 @@ const PASSWORD = 'test-password-123';
 
 type Person = { client: SupabaseClient; email: string };
 
+const createdUserIds: string[] = [];
+
 async function signedIn(name: string): Promise<Person> {
   const email = `${name}-${run}@example.test`;
   const created = await admin.auth.admin.createUser({ email, password: PASSWORD, email_confirm: true });
   if (created.error) throw created.error;
+  createdUserIds.push(created.data.user.id);
   const client = createClient(url, anonKey, noSession);
   const { error } = await client.auth.signInWithPassword({ email, password: PASSWORD });
   if (error) throw error;
@@ -49,6 +52,13 @@ beforeAll(async () => {
   listId = await bootstrap(anna.client);
   const { data } = await anna.client.from('sections').select('id').eq('list_id', listId);
   sectionId = data![0].id;
+});
+
+// Deleting a user removes the lists they created and everything in them, so
+// the tests leave nothing behind when run against a hosted project.
+afterAll(async () => {
+  await admin.from('category_cache').delete().like('text_key', `%-${run}`);
+  for (const id of createdUserIds) await admin.auth.admin.deleteUser(id);
 });
 
 describe('bootstrap', () => {
