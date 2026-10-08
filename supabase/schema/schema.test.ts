@@ -101,25 +101,44 @@ describe('access rules', () => {
     expect(await as(cy, `update public.items set text = 'Changed' where list_id = $1 returning id`, [listId])).toEqual([]);
   });
 
-  it('gives an invited person the shared list when they sign in', async () => {
+  it('shows an invited person the invite and moves them only when they accept', async () => {
     await as(anna, 'insert into public.list_invites (list_id, email) values ($1, $2)', [listId, bo.email]);
+    const own = await bootstrap(bo);
+    expect(own).not.toBe(listId);
+    expect(await as(bo, 'select list_id, invited_by from public.my_invites()')).toEqual([
+      { list_id: listId, invited_by: anna.email },
+    ]);
+    expect(await as(bo, 'select text from public.items where list_id = $1', [listId])).toEqual([]);
+
+    await as(bo, 'select public.accept_invite($1)', [listId]);
     expect(await bootstrap(bo)).toBe(listId);
     expect(await as(bo, 'select text from public.items where list_id = $1', [listId])).toEqual([{ text: 'Milk' }]);
+    expect(await as(bo, 'select list_id from public.my_invites()')).toEqual([]);
     expect(await as(anna, 'select email from public.list_invites where list_id = $1', [listId])).toEqual([]);
   });
 
-  it('prefers a shared list over one the person created earlier', async () => {
-    const dana = await person('dana@example.test');
-    const own = await bootstrap(dana);
-    expect(own).not.toBe(listId);
-    await as(anna, 'insert into public.list_invites (list_id, email) values ($1, $2)', [listId, dana.email]);
-    expect(await bootstrap(dana)).toBe(listId);
+  it('does not move anyone to a stranger\'s list because the stranger invited them', async () => {
+    const strangerList = await bootstrap(cy);
+    await as(cy, 'insert into public.list_invites (list_id, email) values ($1, $2)', [strangerList, anna.email]);
+    expect(await bootstrap(anna)).toBe(listId);
+    expect(await as(anna, 'select list_id, invited_by from public.my_invites()')).toEqual([
+      { list_id: strangerList, invited_by: cy.email },
+    ]);
+    await as(anna, 'select public.decline_invite($1)', [strangerList]);
+    expect(await as(anna, 'select list_id from public.my_invites()')).toEqual([]);
+    expect(await bootstrap(anna)).toBe(listId);
   });
 
   it('does not let an uninvited person join', async () => {
-    await as(cy, 'select public.accept_invites()');
+    await expect(as(cy, 'select public.accept_invite($1)', [listId])).rejects.toThrow(/no invite/);
     expect(await bootstrap(cy)).not.toBe(listId);
     expect(await as(cy, 'select id from public.items where list_id = $1', [listId])).toEqual([]);
+  });
+
+  it('does not show one person another person\'s invites', async () => {
+    await as(anna, 'insert into public.list_invites (list_id, email) values ($1, $2)', [listId, 'someone@example.test']);
+    expect(await as(cy, 'select list_id from public.my_invites()')).toEqual([]);
+    await as(anna, `delete from public.list_invites where email = 'someone@example.test'`);
   });
 
   it('refuses an invite that is not lower-case', async () => {
@@ -159,6 +178,8 @@ describe('access rules', () => {
       }
       await expect(db.query(`update public.items set text = 'x'`)).rejects.toThrow(/permission denied/);
       await expect(db.query('select public.bootstrap()')).rejects.toThrow(/permission denied/);
+      await expect(db.query('select * from public.my_invites()')).rejects.toThrow(/permission denied/);
+      await expect(db.query(`select public.accept_invite('${listId}')`)).rejects.toThrow(/permission denied/);
     } finally {
       await db.exec('reset role');
     }

@@ -17,19 +17,26 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+      # Without these the build would silently ship the device-only preview:
+      # an app that looks right but never syncs.
+      - name: Check Supabase settings
+        run: |
+          test -n "$VITE_SUPABASE_URL" || { echo "::error::Repository variable VITE_SUPABASE_URL is not set"; exit 1; }
+          test -n "$VITE_SUPABASE_ANON_KEY" || { echo "::error::Repository variable VITE_SUPABASE_ANON_KEY is not set"; exit 1; }
       - run: npm ci
       - run: npm test
       - run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

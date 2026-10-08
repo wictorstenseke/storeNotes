@@ -25,6 +25,9 @@ async function fakeStart(): Promise<Runtime> {
     signOut: vi.fn(async () => {}),
     loadPeople: vi.fn(async () => []),
     invite: vi.fn(async () => true),
+    loadInvites: vi.fn(async () => [{ list_id: 'list-9', invited_by: 'anna@example.com' }]),
+    acceptInvite: vi.fn(async () => {}),
+    declineInvite: vi.fn(async () => true),
   };
 }
 
@@ -45,6 +48,14 @@ describe('App', () => {
   it('shows the note when signed in', async () => {
     render(<App sb={fakeSupabase({ user: { id: 'u1' } })} start={fakeStart} />);
     expect(await screen.findByDisplayValue('Grocery List')).toBeInTheDocument();
+  });
+
+  it('shows a pending invite above the note without joining', async () => {
+    let runtime!: Runtime;
+    const start = async () => (runtime = await fakeStart());
+    render(<App sb={fakeSupabase({ user: { id: 'u1' } })} start={start} />);
+    expect(await screen.findByRole('status', { name: 'Invitation' })).toHaveTextContent('anna@example.com invited you');
+    expect(runtime.acceptInvite).not.toHaveBeenCalled();
   });
 
   it('opens the note offline on a device that has used the app, even with no session', async () => {

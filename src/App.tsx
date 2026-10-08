@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { NoteStoreProvider } from './state/context';
 import { readSetting } from './state/deviceSettings';
 import { startRuntime, type Runtime } from './sync/runtime';
+import { InviteBanner } from './ui/InviteBanner';
 import { NoteView } from './ui/NoteView';
 import { SettingsSheet } from './ui/SettingsSheet';
 import { SignIn } from './ui/SignIn';
@@ -87,6 +88,13 @@ function Note({ sb, start }: { sb: SupabaseClient; start: Start }) {
   return (
     <NoteStoreProvider value={runtime.store}>
       <NoteView
+        banner={
+          <InviteBanner
+            loadInvites={runtime.loadInvites}
+            onAccept={(listId) => void runtime.acceptInvite(listId)}
+            onDecline={runtime.declineInvite}
+          />
+        }
         header={
           <>
             <SyncIndicator />

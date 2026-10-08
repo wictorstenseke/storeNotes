@@ -10,6 +10,7 @@ create table public.lists (
 create table public.list_members (
   list_id uuid not null references public.lists (id) on delete cascade,
   user_id uuid not null references auth.users (id) on delete cascade,
+  joined_at timestamptz not null default now(),
   primary key (list_id, user_id)
 );
 
@@ -100,7 +101,20 @@ language sql stable security definer set search_path = '' as $$
   );
 $$;
 
-create function public.accept_invites() returns void
+-- Invites are never accepted automatically. If they were, anyone could move
+-- another person onto their own list just by inviting that person's email.
+
+create function public.my_invites() returns table (list_id uuid, invited_by text)
+language sql stable security definer set search_path = '' as $$
+  select i.list_id, u.email::text
+  from public.list_invites i
+  join public.lists l on l.id = i.list_id
+  join auth.users u on u.id = l.created_by
+  where auth.uid() is not null
+    and i.email = lower(auth.jwt() ->> 'email');
+$$;
+
+create function public.accept_invite(l uuid) returns void
 language plpgsql security definer set search_path = '' as $$
 declare
   me uuid := auth.uid();
@@ -109,11 +123,24 @@ begin
   if me is null or mail is null then
     raise exception 'not signed in';
   end if;
-  insert into public.list_members (list_id, user_id)
-    select i.list_id, me from public.list_invites i where i.email = mail
-    on conflict do nothing;
-  delete from public.list_invites i where i.email = mail;
+  if not exists (
+    select 1 from public.list_invites i where i.list_id = l and i.email = mail
+  ) then
+    raise exception 'no invite for this list';
+  end if;
+  -- The list joined most recently is the one bootstrap() returns.
+  insert into public.list_members (list_id, user_id) values (l, me)
+    on conflict (list_id, user_id) do update set joined_at = now();
+  delete from public.list_invites i where i.list_id = l and i.email = mail;
 end $$;
+
+create function public.decline_invite(l uuid) returns void
+language sql security definer set search_path = '' as $$
+  delete from public.list_invites i
+  where i.list_id = l
+    and auth.uid() is not null
+    and i.email = lower(auth.jwt() ->> 'email');
+$$;
 
 create function public.bootstrap() returns uuid
 language plpgsql security definer set search_path = '' as $$
@@ -126,13 +153,11 @@ begin
   end if;
   -- One at a time per user, so two tabs cannot both create a first list.
   perform pg_advisory_xact_lock(hashtext(me::text));
-  perform public.accept_invites();
 
   select m.list_id into found
   from public.list_members m
-  join public.lists l on l.id = m.list_id
   where m.user_id = me
-  order by (l.created_by = me), l.created_at
+  order by m.joined_at desc
   limit 1;
   if found is not null then
     return found;
@@ -158,11 +183,15 @@ language sql stable security definer set search_path = '' as $$
 $$;
 
 revoke execute on function public.is_member(uuid) from public, anon;
-revoke execute on function public.accept_invites() from public, anon;
+revoke execute on function public.my_invites() from public, anon;
+revoke execute on function public.accept_invite(uuid) from public, anon;
+revoke execute on function public.decline_invite(uuid) from public, anon;
 revoke execute on function public.bootstrap() from public, anon;
 revoke execute on function public.list_people(uuid) from public, anon;
 grant execute on function public.is_member(uuid) to authenticated;
-grant execute on function public.accept_invites() to authenticated;
+grant execute on function public.my_invites() to authenticated;
+grant execute on function public.accept_invite(uuid) to authenticated;
+grant execute on function public.decline_invite(uuid) to authenticated;
 grant execute on function public.bootstrap() to authenticated;
 grant execute on function public.list_people(uuid) to authenticated;
 

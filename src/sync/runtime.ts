@@ -3,6 +3,7 @@ import type { Category } from '../domain/categories';
 import { readSetting, writeSetting } from '../state/deviceSettings';
 import { createNoteStore, type NoteStore } from '../state/noteStore';
 import { showNotice, useSyncStatus } from '../state/syncStatus';
+import type { Invite } from '../ui/InviteBanner';
 import type { Person } from '../ui/SettingsSheet';
 import { Categorizer } from './categorizer';
 import { LocalDb } from './localDb';
@@ -17,6 +18,9 @@ export type Runtime = {
   signOut(): Promise<void>;
   loadPeople(): Promise<Person[]>;
   invite(email: string): Promise<boolean>;
+  loadInvites(): Promise<Invite[]>;
+  acceptInvite(listId: string): Promise<void>;
+  declineInvite(listId: string): Promise<boolean>;
 };
 
 export async function startRuntime(sb: SupabaseClient): Promise<Runtime> {
@@ -30,14 +34,6 @@ export async function startRuntime(sb: SupabaseClient): Promise<Runtime> {
     if (error || typeof data !== 'string') throw new Error('Could not set up the list');
     listId = data;
     writeSetting('listId', listId);
-  } else {
-    const cached = listId;
-    // In the background, pick up an invite accepted since the last start.
-    void sb.rpc('bootstrap').then(({ data }) => {
-      if (typeof data !== 'string' || data === cached) return;
-      writeSetting('listId', data);
-      void db.delete().then(() => window.location.reload());
-    });
   }
   const id = listId;
 
@@ -102,6 +98,30 @@ export async function startRuntime(sb: SupabaseClient): Promise<Runtime> {
       const { error } = await sb
         .from('list_invites')
         .upsert({ list_id: id, email }, { onConflict: 'list_id,email', ignoreDuplicates: true });
+      return !error;
+    },
+    loadInvites: async () => {
+      const { data, error } = await sb.rpc('my_invites');
+      if (error) throw error;
+      return (data ?? []) as Invite[];
+    },
+    // Only ever called from the Join button. Switches this device to the
+    // shared list: send what is still queued, join, then start over from the
+    // server copy of the new list.
+    acceptInvite: async (target) => {
+      await engine?.flush();
+      const { error } = await sb.rpc('accept_invite', { l: target });
+      if (error) {
+        showNotice('Could not join the list. Check your connection and try again.');
+        return;
+      }
+      stop();
+      await db.delete();
+      writeSetting('listId', target);
+      window.location.reload();
+    },
+    declineInvite: async (target) => {
+      const { error } = await sb.rpc('decline_invite', { l: target });
       return !error;
     },
   };

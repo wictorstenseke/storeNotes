@@ -76,9 +76,15 @@ describe('access rules', () => {
     expect(patch.data).toEqual([]);
   });
 
-  it('gives an invited person the shared list when they sign in', async () => {
+  it('shows an invited person the invite and moves them only when they accept', async () => {
     const invite = await anna.client.from('list_invites').insert({ list_id: listId, email: bo.email });
     expect(invite.error).toBeNull();
+    expect(await bootstrap(bo.client)).not.toBe(listId);
+    const invites = await bo.client.rpc('my_invites');
+    expect(invites.data).toEqual([{ list_id: listId, invited_by: anna.email }]);
+
+    const accepted = await bo.client.rpc('accept_invite', { l: listId });
+    expect(accepted.error).toBeNull();
     expect(await bootstrap(bo.client)).toBe(listId);
     const read = await bo.client.from('items').select('text').eq('list_id', listId);
     expect(read.data).toEqual([{ text: 'Milk' }]);
@@ -86,11 +92,29 @@ describe('access rules', () => {
     expect(left.data).toEqual([]);
   });
 
+  it('does not move anyone to a stranger\'s list because the stranger invited them', async () => {
+    const strangerList = await bootstrap(cy.client);
+    await cy.client.from('list_invites').insert({ list_id: strangerList, email: anna.email });
+    expect(await bootstrap(anna.client)).toBe(listId);
+    await anna.client.rpc('decline_invite', { l: strangerList });
+    expect((await anna.client.rpc('my_invites')).data).toEqual([]);
+  });
+
   it('does not let an uninvited person join', async () => {
-    await cy.client.rpc('accept_invites');
+    const attempt = await cy.client.rpc('accept_invite', { l: listId });
+    expect(attempt.error).not.toBeNull();
     expect(await bootstrap(cy.client)).not.toBe(listId);
     const read = await cy.client.from('items').select('id').eq('list_id', listId);
     expect(read.data).toEqual([]);
+  });
+
+  it('answers a request with no session with an error, not an empty result', async () => {
+    const anonymous = createClient(url, anonKey, noSession);
+    const read = await anonymous.from('items').select('id');
+    expect(read.error).not.toBeNull();
+    const write = await anonymous.from('items').update({ text: 'x' }).eq('list_id', listId).select('id');
+    expect(write.error).not.toBeNull();
+    expect((await anonymous.rpc('bootstrap')).error).not.toBeNull();
   });
 
   it('lists members and pending invites to members only', async () => {

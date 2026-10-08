@@ -205,13 +205,15 @@ Notes:
 - A user can read and write `sections`, `items` and `store_orders` rows only for lists they are a member of.
 - A user can read `lists` and `list_members` for their own lists, and add or remove `list_invites` for them.
 - `category_cache` is not readable or writable by clients.
-- `accept_invites()` is a database function callable by a signed-in user. It adds a membership for every invite matching the user's verified email and deletes those invites.
+- Invites are never accepted automatically: if they were, anyone could move another person onto their own list by inviting that person's email. Three database functions, callable by a signed-in user, act only on invites matching the user's verified email: `my_invites()` lists them with the inviter's email, `accept_invite(list)` adds the membership and deletes the invite, `decline_invite(list)` deletes the invite.
+- Tables are closed to requests with no session, so such a request gets an error and never an empty result.
 
 ### Auth and sharing
 
 - Sign-in: enter email, receive a 6-digit code by email, enter the code. This is used instead of magic links or Google redirects because both are unreliable inside an installed iPhone web app.
 - The session persists on the device.
-- After sign-in the app calls `accept_invites()`, then loads the user's list. If the user has no list, one is created with a `Grocery List` section (store sort on).
+- After sign-in the app loads the user's list: the one they joined most recently. If the user has no list, one is created with a `Grocery List` section (store sort on).
+- A pending invite is shown above the note with who sent it, and `Join` and `Decline`. Joining sends any unsent changes, switches this device to the shared list and replaces the local copy. Nothing changes until `Join` is tapped.
 - Settings sheet: `Share with` (enter an email to invite), a list of members and pending invites, and `Sign out`.
 - The Supabase project's `ALLOWED_EMAILS` secret lists the two email addresses allowed to use the categorise function, so a stranger who signs up cannot spend API credit.
 

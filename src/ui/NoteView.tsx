@@ -5,7 +5,7 @@ import { useUi } from '../state/uiStore';
 import { QuickAddBar } from './QuickAddBar';
 import { SectionView } from './SectionView';
 
-export function NoteView({ header }: { header?: ReactNode }) {
+export function NoteView({ header, banner }: { header?: ReactNode; banner?: ReactNode }) {
   const store = useNoteStore();
   const sections = useNote((s) => s.sections);
   const sorted = useMemo(() => [...sections].sort(byManual), [sections]);
@@ -18,6 +18,7 @@ export function NoteView({ header }: { header?: ReactNode }) {
   return (
     <main className="mx-auto flex min-h-full max-w-xl flex-col pb-28 pt-[env(safe-area-inset-top)]">
       <header className="flex h-11 items-center justify-end gap-3 px-4">{header}</header>
+      {banner}
       {sorted.map((section) => (
         <SectionView key={section.id} section={section} />
       ))}
