@@ -60,6 +60,21 @@ describe('stores', () => {
     expect(order.slice(-5)).toEqual(['other', 'beverages', 'snacks', 'candy', 'frozen_sweet']);
   });
 
+  it('walks ICA in the order Wictor described', () => {
+    const order = STORES[1].baseline;
+    // Only what he said outright; the categories he did not mention are placed by guess.
+    const described = [
+      'produce', 'meat', 'fish', 'deli', 'cheese', 'pasta_rice', 'spices_sauces', 'bakery',
+      'coffee_tea', 'frozen', 'dairy', 'juice', 'personal_care', 'household', 'candy',
+      'frozen_sweet', 'beverages', 'snacks',
+    ];
+    expect(order.filter((category) => described.includes(category))).toEqual(described);
+    expect(order[0]).toBe('produce');
+    expect(order.slice(-2)).toEqual(['beverages', 'snacks']);
+    expect(Math.abs(order.indexOf('pet') - order.indexOf('household'))).toBe(1);
+    expect(order).not.toEqual(STORES[0].baseline);
+  });
+
   it('finds a store by id', () => {
     expect(getStore(STORES[0].id)).toBe(STORES[0]);
     expect(getStore('nope')).toBeUndefined();

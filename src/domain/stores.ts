@@ -41,10 +41,46 @@ const WILLYS: Category[] = [
   'frozen_sweet',
 ];
 
+// ICA, as Wictor described it:
+//   frukt och grönt; korv, bacon osv, kött och fisk; charken, pålägg; ost;
+//   pasta och ris; ketchup osv; sen bröd; kaffe; frysavdelning för fryst kött
+//   och grönt; mejeri och kylda drycker; efter mejeriet hygien och städgrejer,
+//   djur nära där; godis och glassfrys; sist drycken och snacks.
+// He did not mention the lines marked "guess"; they sit where they most
+// plausibly are and move as the app learns.
+const ICA: Category[] = [
+  'produce',
+  'meat',
+  'fish',
+  'deli',
+  'chilled_sauces', // guess: with the cold cuts, as at Willys
+  'cheese',
+  'pasta_rice',
+  'pantry', // guess: dry goods by the pasta
+  'canned', // guess: by the ketchup
+  'spices_sauces',
+  'bakery',
+  'breakfast', // guess: by the bread
+  'baking', // guess: by the coffee
+  'coffee_tea',
+  'frozen',
+  'dairy',
+  'eggs', // guess: by the dairy
+  'juice',
+  'personal_care',
+  'baby', // guess: by hygiene
+  'household',
+  'pet',
+  'other', // guess
+  'candy',
+  'frozen_sweet',
+  'beverages',
+  'snacks',
+];
+
 export const STORES: StoreDef[] = [
   { id: 'willys', name: 'Willys', baseline: WILLYS },
-  // Starts as a copy of Willys until the differences have been described.
-  { id: 'ica', name: 'ICA', baseline: [...WILLYS] },
+  { id: 'ica', name: 'ICA', baseline: ICA },
 ];
 
 export function getStore(id: string | null): StoreDef | undefined {
