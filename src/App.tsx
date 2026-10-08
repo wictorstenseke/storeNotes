@@ -1,32 +1,116 @@
 import { useEffect, useState } from 'react';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { NoteStoreProvider } from './state/context';
-import { createNoteStore, type NoteStore } from './state/noteStore';
-import { LocalDb } from './sync/localDb';
-import { Outbox } from './sync/outbox';
+import { readSetting } from './state/deviceSettings';
+import { startRuntime, type Runtime } from './sync/runtime';
 import { NoteView } from './ui/NoteView';
+import { SettingsSheet } from './ui/SettingsSheet';
+import { SignIn } from './ui/SignIn';
+import { SyncIndicator } from './ui/SyncIndicator';
 
-export function App() {
-  const [store, setStore] = useState<NoteStore | null>(null);
+type Start = (sb: SupabaseClient) => Promise<Runtime>;
+
+// undefined = not known yet. A device with a cached list counts as signed in
+// from the first render so the note opens with no network.
+function useSignedIn(sb: SupabaseClient): boolean | undefined {
+  const [signedIn, setSignedIn] = useState<boolean | undefined>(
+    readSetting('listId') ? true : undefined,
+  );
 
   useEffect(() => {
-    const db = new LocalDb('storenotes-preview');
-    const preview = createNoteStore({ db, outbox: new Outbox(db) });
-    void preview
-      .getState()
-      .load('preview')
-      .then(() => {
-        if (preview.getState().sections.length === 0) {
-          const id = preview.getState().addSection('Grocery List');
-          preview.getState().setStoreSort(id, true);
-        }
-        setStore(preview);
-      });
-  }, []);
+    const check = async () => {
+      const { data } = await sb.auth.getSession();
+      if (data.session) setSignedIn(true);
+      else if (!readSetting('listId') || navigator.onLine) setSignedIn(false);
+    };
+    void check();
+    const { data } = sb.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') setSignedIn(false);
+      else if (session) setSignedIn(true);
+    });
+    window.addEventListener('online', check);
+    return () => {
+      data.subscription.unsubscribe();
+      window.removeEventListener('online', check);
+    };
+  }, [sb]);
 
-  if (!store) return null;
+  return signedIn;
+}
+
+function Note({ sb, start }: { sb: SupabaseClient; start: Start }) {
+  const [runtime, setRuntime] = useState<Runtime | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    let started: Runtime | null = null;
+    setFailed(false);
+    start(sb).then(
+      (rt) => {
+        if (cancelled) rt.stop();
+        else {
+          started = rt;
+          setRuntime(rt);
+        }
+      },
+      () => {
+        if (!cancelled) setFailed(true);
+      },
+    );
+    return () => {
+      cancelled = true;
+      started?.stop();
+    };
+  }, [sb, start, attempt]);
+
+  if (failed) {
+    return (
+      <main className="mx-auto flex max-w-sm flex-col gap-3 px-6 pt-24">
+        <p className="text-[14px] text-ink-2">Connect to the internet to finish setting up.</p>
+        <button
+          type="button"
+          className="self-start text-[16px] font-semibold text-notes-ink"
+          onClick={() => setAttempt((n) => n + 1)}
+        >
+          Try again
+        </button>
+      </main>
+    );
+  }
+  if (!runtime) return null;
+
   return (
-    <NoteStoreProvider value={store}>
-      <NoteView />
+    <NoteStoreProvider value={runtime.store}>
+      <NoteView
+        header={
+          <>
+            <SyncIndicator />
+            <SettingsSheet
+              loadPeople={runtime.loadPeople}
+              invite={runtime.invite}
+              onSignOut={() => void runtime.signOut()}
+            />
+          </>
+        }
+      />
     </NoteStoreProvider>
   );
+}
+
+export function App({ sb, start = startRuntime }: { sb: SupabaseClient; start?: Start }) {
+  const signedIn = useSignedIn(sb);
+  if (signedIn === undefined) return null;
+  if (!signedIn) {
+    return (
+      <SignIn
+        auth={{
+          signInWithOtp: (args) => sb.auth.signInWithOtp(args),
+          verifyOtp: (args) => sb.auth.verifyOtp(args),
+        }}
+      />
+    );
+  }
+  return <Note sb={sb} start={start} />;
 }
