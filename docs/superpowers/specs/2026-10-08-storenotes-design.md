@@ -211,7 +211,9 @@ Notes:
 
 ### Auth and sharing
 
-- Sign-in: enter email, receive a 6-digit code by email, enter the code. This is used instead of magic links or Google redirects because both are unreliable inside an installed iPhone web app.
+- Sign-in: email and password. Each person creates an account once, opens the confirmation link Supabase emails, and then signs in.
+- This replaces the emailed 6-digit code first planned: Supabase no longer lets new free projects edit the sign-in email, so it cannot be made to show a code. Email links alone are not enough, because on iPhone a link opens in Safari and leaves the app installed on the home screen signed out.
+- There is no "forgot password" screen in v1; a password is reset from the Supabase dashboard.
 - The session persists on the device.
 - After sign-in the app loads the user's list: the one they joined most recently. If the user has no list, one is created with a `Grocery List` section (store sort on).
 - A pending invite is shown above the note with who sent it, and `Join` and `Decline`. Joining sends any unsent changes, switches this device to the shared list and replaces the local copy. Nothing changes until `Join` is tapped.
@@ -282,7 +284,7 @@ Client side (`categorizer.ts`):
 - Offline or failed sync: a small unobtrusive indicator shows "Offline — changes will sync" while the outbox is non-empty and the app is offline. No blocking dialogs.
 - A mutation the server rejects permanently (for example, access removed) is dropped from the outbox and the list is refetched; the user sees a brief message that a change could not be saved.
 - Categorisation failure: silent; the item stays at the top of the sorted view as untagged and is retried.
-- Sign-in errors (wrong or expired code, email rate limit) are shown inline on the sign-in screen.
+- Sign-in errors (wrong email or password, email not confirmed yet, too many attempts, no connection) are shown inline on the sign-in screen.
 - Session expired: the app shows the sign-in screen; the local copy and outbox are kept and synced after sign-in.
 
 ## Testing
@@ -309,7 +311,7 @@ Backend tests (local Supabase):
 
 Manual pass on iPhone (installed to home screen):
 
-- Sign in with code, invite second account, both see the same note.
+- Create an account, confirm by email, sign in; invite the second account and join; both see the same note.
 - Add, edit, check, uncheck, clear done with both phones open.
 - Airplane mode: open, add, check, then reconnect and confirm sync.
 - Store picker on one phone does not change the other.

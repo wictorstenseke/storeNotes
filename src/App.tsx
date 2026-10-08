@@ -117,8 +117,16 @@ export function App({ sb, start = startRuntime }: { sb: SupabaseClient; start?: 
     return (
       <SignIn
         auth={{
-          signInWithOtp: (args) => sb.auth.signInWithOtp(args),
-          verifyOtp: (args) => sb.auth.verifyOtp(args),
+          signIn: async (args) => {
+            const { error } = await sb.auth.signInWithPassword(args);
+            return { error };
+          },
+          signUp: async (args) => {
+            // The confirmation link opens this deployment of the app.
+            const emailRedirectTo = window.location.origin + import.meta.env.BASE_URL;
+            const { data, error } = await sb.auth.signUp({ ...args, options: { emailRedirectTo } });
+            return { error, needsConfirmation: !error && !data.session };
+          },
         }}
       />
     );
