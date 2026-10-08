@@ -13,7 +13,6 @@ import { DoneGroup } from './DoneGroup';
 import { ItemLine } from './ItemLine';
 import { MOTION } from './motion';
 import { SectionMenu } from './SectionMenu';
-import { StorePicker } from './StorePicker';
 
 type TitleProps = {
   title: string;
@@ -97,12 +96,13 @@ export function SectionView({ section }: { section: Section }) {
 
   const mine = useMemo(() => items.filter((i) => i.section_id === section.id), [items, section.id]);
 
+  const activeStore = section.store_sort ? getStore(storeId) : undefined;
+
   const order = useMemo(() => {
-    const store = section.store_sort ? getStore(storeId) : undefined;
-    if (!store) return null;
-    const scores = storeOrders.find((o) => o.store_id === store.id)?.scores;
-    return effectiveOrder(store.baseline, scores);
-  }, [section.store_sort, storeId, storeOrders]);
+    if (!activeStore) return null;
+    const scores = storeOrders.find((o) => o.store_id === activeStore.id)?.scores;
+    return effectiveOrder(activeStore.baseline, scores);
+  }, [activeStore, storeOrders]);
 
   const open = useMemo(() => sortOpen(mine, order, hold), [mine, order, hold]);
   const done = useMemo(() => sortDone(mine), [mine]);
@@ -181,18 +181,19 @@ export function SectionView({ section }: { section: Section }) {
           onCommit={(title) => note.renameSection(section.id, title)}
           onEnter={() => startLine(null, open.length)}
         />
+        {/* The store is chosen in the menu; name it here so the choice is visible. */}
+        {activeStore && (
+          <span className="shrink-0 text-[13px] text-ink-2">{activeStore.name}</span>
+        )}
         <SectionMenu
           title={section.title}
           storeSort={section.store_sort}
+          storeId={storeId}
           onStoreSort={(on) => note.setStoreSort(section.id, on)}
+          onStore={ui.setStoreId}
           onDelete={() => note.deleteSection(section.id)}
         />
       </div>
-      {section.store_sort && (
-        <div className="px-4 pb-1">
-          <StorePicker value={storeId} onChange={ui.setStoreId} />
-        </div>
-      )}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}

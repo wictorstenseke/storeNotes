@@ -65,8 +65,9 @@ Assumptions:
 ### Quick add
 
 - An input bar is pinned to the bottom of the screen and stays above the on-screen keyboard.
-- Type and press Enter (or tap `+`): the item is added, the field clears and stays focused.
-- A chip in the bar shows the target section. It defaults to the section last added to on this device, and tapping it switches section.
+- Type and press Enter (or tap `Add`): the item is added, the field clears and stays focused.
+- The field is a rounded, lightly filled field so it reads as the place to type. `Add` is a yellow button beside it, dimmed while there is nothing to add.
+- A chip at the left end of the field shows the target section. It defaults to the section last added to on this device, and tapping it switches section.
 - Text containing commas or line breaks adds one item per part. Empty parts are ignored.
 - Quick-added items go to the end of the target section's manual order.
 
@@ -74,7 +75,7 @@ Assumptions:
 
 - Stores are defined in `src/domain/stores.ts`. Each has an id, a name, the layout description as written by Wictor (kept as a comment for reference), and a baseline category order: the full category list in walking order.
 - Wictor supplies the layout text for the two stores; the baseline order is written from it during implementation. Until then two example stores are used so the feature can be built and tested.
-- Sections with store sort on show a store picker: the two stores plus `No store`.
+- The store is chosen in the section's `⋯` menu, top right of the section. In a section with store sort on, the menu lists `No store` and the two stores above its other entries. The chosen store's name is shown in small grey text beside the `⋯` button, since the menu itself is closed.
 - The selected store is stored per device, not synced. One person can view store order while the other sees manual order.
 - With `No store`, unchecked items are in manual order.
 - With a store selected, unchecked items are ordered by:
@@ -113,9 +114,9 @@ Look:
 - Plain page background with no cards, boxes or shadows around sections. Sections are separated by white space only.
 - Round checkboxes like Apple Notes: a thin grey circle when unchecked, filled with the accent colour and a checkmark when checked.
 - Done items have grey text and no strikethrough, as in Apple Notes.
-- One accent colour, the Apple Notes yellow, used for checked boxes, the text cursor, the `+` button and links. Everything else is black, white and greys.
+- One accent colour, the Apple Notes yellow, used for checked boxes, the text cursor, the `Add` button and links. Everything else is black, white and greys.
 - Light and dark mode follow the phone's setting.
-- Controls are quiet: the store picker, section chip and section menu are small text or icon buttons, not prominent buttons.
+- Controls are quiet: the section chip and section menu are small text or icon buttons. `Add` is the one prominent button.
 - shadcn components are used only for the settings sheet, menus and the confirmation dialog, and are restyled to match.
 
 Feel:

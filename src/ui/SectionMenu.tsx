@@ -14,18 +14,27 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { STORES, getStore } from '../domain/stores';
 
 type Props = {
   title: string;
   storeSort: boolean;
+  storeId: string | null;
   onStoreSort(on: boolean): void;
+  onStore(id: string | null): void;
   onDelete(): void;
 };
 
-export function SectionMenu({ title, storeSort, onStoreSort, onDelete }: Props) {
+const NO_STORE = 'none';
+
+export function SectionMenu({ title, storeSort, storeId, onStoreSort, onStore, onDelete }: Props) {
   const [confirming, setConfirming] = useState(false);
+  const chosen = getStore(storeId)?.id ?? NO_STORE;
   return (
     <>
       <DropdownMenu>
@@ -35,7 +44,25 @@ export function SectionMenu({ title, storeSort, onStoreSort, onDelete }: Props) 
         >
           ⋯
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="min-w-48">
+          {storeSort && (
+            <>
+              <DropdownMenuRadioGroup
+                value={chosen}
+                onValueChange={(value) => onStore(value === NO_STORE ? null : String(value))}
+              >
+                <DropdownMenuRadioItem value={NO_STORE} closeOnClick>
+                  No store
+                </DropdownMenuRadioItem>
+                {STORES.map((store) => (
+                  <DropdownMenuRadioItem key={store.id} value={store.id} closeOnClick>
+                    {store.name}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
+            </>
+          )}
           <DropdownMenuCheckboxItem
             checked={storeSort}
             onCheckedChange={(checked) => onStoreSort(checked === true)}

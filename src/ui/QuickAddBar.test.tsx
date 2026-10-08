@@ -64,6 +64,18 @@ describe('QuickAddBar', () => {
     expect(document.activeElement).toBe(field());
   });
 
+  it('has a button that says Add, dimmed until there is something to add', async () => {
+    const { user } = await setup();
+    const add = screen.getByRole('button', { name: 'Add' });
+    expect(add).toHaveTextContent('Add');
+    expect(add).toHaveAttribute('aria-disabled', 'true');
+    await user.type(field(), 'Milk');
+    expect(add).toHaveAttribute('aria-disabled', 'false');
+    await user.clear(field());
+    await user.type(field(), '   ');
+    expect(add).toHaveAttribute('aria-disabled', 'true');
+  });
+
   it('switches target section with the chip and remembers the last one used', async () => {
     const { textsIn, sectionIds, user } = await setup();
     const chip = () => screen.getByRole('button', { name: /^Adding to/ });

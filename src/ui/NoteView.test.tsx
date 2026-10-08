@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Category } from '../domain/categories';
@@ -25,6 +25,13 @@ async function setup(seed?: (note: NoteState & NoteActions, sectionId: string) =
     </NoteStoreProvider>,
   );
   return { store, sectionId, user: userEvent.setup() };
+}
+
+// The store is chosen in the section's ⋯ menu.
+async function chooseStore(user: ReturnType<typeof userEvent.setup>, name: string, section = 'Grocery List') {
+  await user.click(screen.getByRole('button', { name: `Options for ${section}` }));
+  await user.click(await screen.findByRole('menuitemradio', { name }));
+  await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
 }
 
 const fields = () => screen.queryAllByRole('textbox', { name: 'Item' }) as HTMLTextAreaElement[];
@@ -104,6 +111,7 @@ describe('checking off', () => {
 });
 
 describe('store order', () => {
+  const STORE_NAMES = STORES.map((store) => store.name);
   // Written against whatever the first store is, so the tests still hold when
   // Task 15 replaces the example stores with the real ones.
   const STORE = STORES[0];
@@ -126,29 +134,44 @@ describe('store order', () => {
   it('sorts by the chosen store and returns to manual order with No store', async () => {
     const { user } = await setup(seedTagged);
     expect(lines()).toEqual(['Ice', 'Milk', 'New', 'Apple']);
-    await user.click(screen.getByRole('button', { name: STORE.name }));
+    const grocery = screen.getByRole('region', { name: 'Grocery List' });
+    expect(within(grocery).queryByText(STORE.name)).toBeNull();
+    await chooseStore(user, STORE.name);
     expect(lines()).toEqual(['New', ...inStoreOrder]);
-    expect(screen.getByRole('button', { name: STORE.name })).toHaveAttribute('aria-pressed', 'true');
-    await user.click(screen.getByRole('button', { name: 'No store' }));
+    // The chosen store is named beside the menu button, since the menu is closed.
+    expect(within(grocery).getByText(STORE.name)).toBeInTheDocument();
+    await chooseStore(user, 'No store');
     expect(lines()).toEqual(['Ice', 'Milk', 'New', 'Apple']);
+    expect(within(grocery).queryByText(STORE.name)).toBeNull();
   });
 
   it('records the chosen store on a checked item', async () => {
     const { store, user } = await setup(seedTagged);
-    await user.click(screen.getByRole('button', { name: STORE.name }));
+    await chooseStore(user, STORE.name);
     await user.click(screen.getByRole('checkbox', { name: 'Check Milk' }));
     expect(store.getState().items.find((i) => i.text === 'Milk')?.checked_store).toBe(STORE.id);
   });
 
-  it('shows no store picker in a section with store sort off', async () => {
-    const { store } = await setup(seedAC);
+  it('offers stores only in the menu of a section with store sort on', async () => {
+    const { store, user } = await setup(seedAC);
     act(() => {
       store.getState().addSection('Gifts');
     });
-    const gifts = screen.getByRole('region', { name: 'Gifts' });
-    expect(within(gifts).queryByRole('group', { name: 'Store' })).toBeNull();
-    const grocery = screen.getByRole('region', { name: 'Grocery List' });
-    expect(within(grocery).getByRole('group', { name: 'Store' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Options for Gifts' }));
+    await screen.findByRole('menuitemcheckbox', { name: 'Sort by store' });
+    expect(screen.queryByRole('menuitemradio')).toBeNull();
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+
+    await user.click(screen.getByRole('button', { name: 'Options for Grocery List' }));
+    expect(await screen.findByRole('menuitemradio', { name: STORE_NAMES[0] })).toBeInTheDocument();
+    expect(screen.getByRole('menuitemradio', { name: STORE_NAMES[1] })).toBeInTheDocument();
+    expect(screen.getByRole('menuitemradio', { name: 'No store' })).toBeInTheDocument();
+  });
+
+  it('has no row of store buttons under the section title', async () => {
+    await setup(seedAC);
+    expect(screen.queryByRole('group', { name: 'Store' })).toBeNull();
   });
 });
 
@@ -171,7 +194,7 @@ describe('reordering', () => {
     const { user } = await setup(seedAC);
     expect(rows()).toHaveLength(2);
     expect(rows().every((row) => row.getAttribute('data-draggable') === 'true')).toBe(true);
-    await user.click(screen.getByRole('button', { name: STORES[0].name }));
+    await chooseStore(user, STORES[0].name);
     expect(rows().every((row) => row.getAttribute('data-draggable') === 'false')).toBe(true);
   });
 });

@@ -133,6 +133,7 @@
   --ink: #1c1c1e;
   --ink-2: #8e8e93;
   --line: #c7c7cc;
+  --field: #f2f2f7;
   --notes: #ffcc00;
   --notes-ink: #b58900;
 }
@@ -142,6 +143,7 @@
   --ink: #f2f2f7;
   --ink-2: #98989f;
   --line: #48484a;
+  --field: #1c1c1e;
   --notes: #ffd60a;
   --notes-ink: #ffd60a;
 }
@@ -151,6 +153,7 @@
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-line: var(--line);
+  --color-field: var(--field);
   --color-notes: var(--notes);
   --color-notes-ink: var(--notes-ink);
 }
