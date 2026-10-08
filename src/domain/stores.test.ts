@@ -48,7 +48,9 @@ describe('stores', () => {
     const before = (a: string, b: string) => order.indexOf(a as never) < order.indexOf(b as never);
     expect(order[0]).toBe('produce');
     expect(order.slice(1, 4)).toEqual(['bakery', 'deli', 'chilled_sauces']);
-    expect(order.slice(order.indexOf('dairy'), order.indexOf('dairy') + 3)).toEqual(['dairy', 'cheese', 'juice']);
+    expect(order.slice(order.indexOf('fish'), order.indexOf('fish') + 7)).toEqual([
+      'fish', 'dairy', 'juice', 'frozen', 'cheese', 'eggs', 'canned',
+    ]);
     expect(before('fish', 'dairy')).toBe(true);
     expect(before('frozen', 'eggs')).toBe(true);
     expect(before('canned', 'spices_sauces')).toBe(true);
