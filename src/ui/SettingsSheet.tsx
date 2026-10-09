@@ -148,7 +148,7 @@ export function SettingsPanel({
   };
 
   return (
-    <div className="flex max-h-[70dvh] flex-col gap-5 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+    <div className="flex flex-col gap-5 px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
       <Group title="Delning">
         {people.map((person) => (
           <div key={person.email} className={ROW}>
