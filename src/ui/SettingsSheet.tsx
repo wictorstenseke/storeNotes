@@ -21,6 +21,7 @@ import { STORES, getStore } from '../domain/stores';
 import { useUi } from '../state/uiStore';
 import { StoreOrderPanel } from './StoreOrder';
 import { useKeyboardInset } from './useKeyboardInset';
+import LiquidGlass from 'liquid-glass-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { isDarkMode, setDarkMode } from '../theme';
@@ -236,6 +237,7 @@ export function SettingsSheet({ loadPeople, invite, onSignOut }: SheetProps) {
   const [view, setView] = useState<View>('settings');
   const [orderStore, setOrderStore] = useState(STORES[0].id);
   const keyboardInset = useKeyboardInset();
+  const glassArea = useRef<HTMLDivElement>(null);
   // Loaded before the sheet opens: people appearing mid-slide made it jump.
   const [people, setPeople] = useState<Person[]>([]);
   const refresh = useCallback(async () => setPeople(await loadPeople()), [loadPeople]);
@@ -252,13 +254,26 @@ export function SettingsSheet({ loadPeople, invite, onSignOut }: SheetProps) {
         setOpen(next);
       }}
     >
-      {/* A round glass button: translucent, blurred, hairline edge and a soft shadow. */}
-      <SheetTrigger
-        aria-label="Meny"
-        className="grid size-11 place-items-center rounded-full border border-line/60 bg-page/60 text-ink shadow-[0_2px_12px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-xl backdrop-saturate-150 active:bg-page/80"
-      >
-        <MenuIcon className="size-5" />
-      </SheetTrigger>
+      {/* Liquid glass sits behind a transparent trigger, which keeps the sheet's a11y and open handling. */}
+      <div ref={glassArea} className="relative size-11">
+        <LiquidGlass
+          mouseContainer={glassArea}
+          cornerRadius={22}
+          padding="0"
+          blurAmount={0.1}
+          displacementScale={50}
+          elasticity={0.25}
+          style={{ position: 'absolute', top: '50%', left: '50%' }}
+        >
+          <div className="grid size-11 place-items-center text-ink">
+            <MenuIcon className="size-5" />
+          </div>
+        </LiquidGlass>
+        <SheetTrigger
+          aria-label="Meny"
+          className="absolute inset-0 z-10 rounded-full"
+        />
+      </div>
       <SheetContent
         side="bottom"
         className={`gap-0 rounded-t-lg data-[side=bottom]:mx-auto data-[side=bottom]:max-w-xl ${
