@@ -22,6 +22,7 @@ type UiState = {
   quickAddSectionId: string | null;
   selection: Selection | null;
   showQuickAdd: boolean; // the add-item bar at the bottom, per device
+  sheetRequest: 'invite' | null; // something outside the settings sheet asking it to open on a view
   hiddenStoreHints: string[]; // lists that hide the store text beside their menu, per device
   requestFocus(id: string | null): void;
   setHold(hold: Hold | null): void;
@@ -30,6 +31,7 @@ type UiState = {
   setSelection(selection: Selection | null): void;
   toggleStoreHint(sectionId: string): void;
   setShowQuickAdd(show: boolean): void;
+  requestSheet(view: 'invite' | null): void;
 };
 
 export const useUi = create<UiState>()((set) => ({
@@ -39,10 +41,12 @@ export const useUi = create<UiState>()((set) => ({
   quickAddSectionId: readSetting('quickAddSectionId'),
   selection: null,
   showQuickAdd: readSetting('showQuickAdd') !== 'false',
+  sheetRequest: null,
   hiddenStoreHints: readIds('hiddenStoreHints'),
   requestFocus: (focusId) => set({ focusId }),
   setHold: (hold) => set({ hold }),
   setSelection: (selection) => set({ selection }),
+  requestSheet: (sheetRequest) => set({ sheetRequest }),
   setShowQuickAdd: (showQuickAdd) => {
     writeSetting('showQuickAdd', String(showQuickAdd));
     set({ showQuickAdd });

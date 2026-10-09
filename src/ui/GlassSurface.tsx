@@ -1,5 +1,5 @@
-import LiquidGlass from "liquid-glass-react";
-import { useRef, type CSSProperties, type ReactNode } from "react";
+import LiquidGlass from 'liquid-glass-react';
+import { useRef, type CSSProperties, type ReactNode } from 'react';
 
 type Props = {
   /** Pixels. The glass is measured once, so the size is fixed rather than following its content. */
@@ -17,23 +17,22 @@ type Props = {
 // `flex!`: the library's inline-flex leaves a baseline gap, so its box is 6px taller than the glass and
 // the centring shifts the glass up, off our rim.
 const GLASS =
-  "[&_.glass]:flex! [&_.glass]:shadow-[0_2px_12px_rgba(0,0,0,0.1)]! [&_.glass>div]:[text-shadow:none] [&_.glass__warp]:bg-page/55";
+  '[&_.glass]:flex! [&_.glass]:shadow-[0_2px_12px_rgba(0,0,0,0.1)]! [&_.glass>div]:[text-shadow:none] [&_.glass__warp]:bg-page/55';
 
 // The rim, like iOS: a hairline that is faint along the top and bottom and darkest on the rounded ends,
 // plus a little inner shading. Dark mode keeps a plain light stroke instead.
 const RIM =
-  "shadow-[0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.22),inset_0_1.5px_2px_rgba(255,255,255,0.45),inset_0_-1px_2px_rgba(255,255,255,0.15)]";
+  'shadow-[0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.22),inset_0_1.5px_2px_rgba(255,255,255,0.45),inset_0_-1px_2px_rgba(255,255,255,0.15)]';
 
 // A 1px ring just outside the glass (-inset-px), so the glass keeps its full size. Masked out of a horizontal gradient, so it only shows on the end caps (one radius wide).
 function endCaps(radius: number): CSSProperties {
-  const dark = "rgba(0,0,0,0.22)";
+  const dark = 'rgba(0,0,0,0.22)';
   return {
     padding: 1,
     background: `linear-gradient(90deg, ${dark}, transparent ${radius}px, transparent calc(100% - ${radius}px), ${dark})`,
-    WebkitMask:
-      "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
-    WebkitMaskComposite: "xor",
-    maskComposite: "exclude",
+    WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+    WebkitMaskComposite: 'xor',
+    maskComposite: 'exclude',
   };
 }
 
@@ -42,13 +41,7 @@ function endCaps(radius: number): CSSProperties {
 export const GLASS_BUTTON =
   'rounded-full transition-colors duration-150 hover:bg-ink/5 active:bg-ink/10 [&>svg]:transition-transform [&>svg]:duration-150 active:[&>svg]:scale-90';
 
-export function GlassSurface({
-  width,
-  height,
-  glass,
-  className = "",
-  children,
-}: Props) {
+export function GlassSurface({ width, height, glass, className = '', children }: Props) {
   // The library draws its own rim (the blended spans beside the glass), which would double ours.
   const area = useRef<HTMLDivElement>(null);
   return (
@@ -67,19 +60,13 @@ export function GlassSurface({
         aberrationIntensity={0}
         elasticity={0.2}
         className={GLASS}
-        style={{ position: "absolute", top: "50%", left: "50%" }}
+        style={{ position: 'absolute', top: '50%', left: '50%' }}
       >
-        <div
-          className="grid place-items-center text-ink"
-          style={{ width, height }}
-        >
+        <div className="grid place-items-center text-ink" style={{ width, height }}>
           {glass}
         </div>
       </LiquidGlass>
-      <span
-        aria-hidden
-        className={`pointer-events-none absolute inset-0 rounded-full ${RIM}`}
-      />
+      <span aria-hidden className={`pointer-events-none absolute inset-0 rounded-full ${RIM}`} />
       <span
         aria-hidden
         className="pointer-events-none absolute -inset-px rounded-full dark:hidden"

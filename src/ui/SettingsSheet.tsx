@@ -244,6 +244,15 @@ export function SettingsSheet({ loadPeople, invite, onSignOut }: SheetProps) {
     refresh().catch(() => {});
   }, [refresh]);
 
+  // The share button on the page opens this sheet straight on the invite view.
+  const request = useUi((s) => s.sheetRequest);
+  useEffect(() => {
+    if (!request) return;
+    setView(request);
+    setOpen(true);
+    useUi.getState().requestSheet(null);
+  }, [request]);
+
   const { title, description } = HEADINGS[view];
   return (
     <Sheet

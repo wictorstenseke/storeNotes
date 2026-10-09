@@ -1,6 +1,7 @@
-import { PlusIcon, ShoppingBasketIcon } from "lucide-react";
-import { useMemo, type ReactNode } from "react";
-import { Button } from "@/components/ui/button";
+import { PlusIcon, ShoppingBasketIcon } from 'lucide-react';
+import { useMemo, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
+import { Button } from '@/components/ui/button';
 import {
   Empty,
   EmptyContent,
@@ -8,24 +9,18 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@/components/ui/empty";
-import { byManual } from "../domain/sort";
-import { useNote, useNoteStore } from "../state/context";
-import { useUi } from "../state/uiStore";
-import { GLASS_BUTTON, GlassSurface } from "./GlassSurface";
-import { ListControls } from "./ListControls";
-import { QuickAddBar } from "./QuickAddBar";
-import { SyncIndicator } from "./SyncIndicator";
-import { useKeyboard } from "./useKeyboardInset";
-import { SectionView } from "./SectionView";
+} from '@/components/ui/empty';
+import { byManual } from '../domain/sort';
+import { useNote, useNoteStore } from '../state/context';
+import { useUi } from '../state/uiStore';
+import { GLASS_BUTTON, GlassSurface } from './GlassSurface';
+import { ListControls } from './ListControls';
+import { QuickAddBar, focusWithoutScroll } from './QuickAddBar';
+import { SyncIndicator } from './SyncIndicator';
+import { useKeyboard } from './useKeyboardInset';
+import { SectionView } from './SectionView';
 
-export function NoteView({
-  header,
-  banner,
-}: {
-  header?: ReactNode;
-  banner?: ReactNode;
-}) {
+export function NoteView({ header, banner }: { header?: ReactNode; banner?: ReactNode }) {
   const store = useNoteStore();
   const keyboard = useKeyboard();
   const showQuickAdd = useUi((s) => s.showQuickAdd);
@@ -45,22 +40,14 @@ export function NoteView({
   return (
     <div
       className="fixed inset-x-0 flex flex-col"
-      style={
-        keyboardOpen
-          ? { top: keyboard.top, height: keyboard.height }
-          : { top: 0, bottom: 0 }
-      }
+      style={keyboardOpen ? { top: keyboard.top, height: keyboard.height } : { top: 0, bottom: 0 }}
     >
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex min-h-full max-w-xl flex-col pb-6 pt-[env(safe-area-inset-top)]">
           {/* Zero height, so the button hangs out of it and stays in view while the list scrolls. */}
           <div className="pointer-events-none sticky top-[calc(env(safe-area-inset-top)+1.25rem)] z-20 mt-5 h-0 px-5">
             <div className="flex items-start justify-between">
-              {sorted.length > 0 ? (
-                <ListControls onNewList={addSection} />
-              ) : (
-                <span />
-              )}
+              {sorted.length > 0 ? <ListControls onNewList={addSection} /> : <span />}
               <div className="pointer-events-auto w-fit">{header}</div>
             </div>
           </div>
@@ -91,11 +78,7 @@ export function NoteView({
               {sorted.map((section) => (
                 <SectionView key={section.id} section={section} />
               ))}
-              <Button
-                variant="outline"
-                className="mx-5 mb-10 mt-9 self-start"
-                onClick={addSection}
-              >
+              <Button variant="outline" className="mx-5 mb-10 mt-9 self-start" onClick={addSection}>
                 + Ny lista
               </Button>
             </>
@@ -113,7 +96,14 @@ export function NoteView({
                   type="button"
                   aria-label="Lägg till varor"
                   className={`absolute inset-0 z-10 ${GLASS_BUTTON}`}
-                  onClick={() => useUi.getState().setShowQuickAdd(true)}
+                  onClick={() => {
+                    // Focus inside the tap, or iOS won't raise the keyboard: render the bar synchronously first.
+                    flushSync(() => useUi.getState().setShowQuickAdd(true));
+                    const field = document.querySelector<HTMLTextAreaElement>(
+                      'textarea[aria-label="Lägg till vara"]',
+                    );
+                    if (field) focusWithoutScroll(field);
+                  }}
                 />
               </GlassSurface>
             </div>

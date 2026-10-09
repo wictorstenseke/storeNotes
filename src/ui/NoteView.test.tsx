@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Category } from '../domain/categories';
 import { sortOpen } from '../domain/sort';
 import { STORES } from '../domain/stores';
@@ -487,7 +487,9 @@ describe('quick-add toggle', () => {
     expect(screen.queryByRole('textbox', { name: 'Lägg till vara' })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Lägg till varor' }));
     expect(useUi.getState().showQuickAdd).toBe(true);
-    expect(screen.getByRole('textbox', { name: 'Lägg till vara' })).toBeInTheDocument();
+    const field = screen.getByRole('textbox', { name: 'Lägg till vara' });
+    expect(field).toBeInTheDocument();
+    expect(document.activeElement).toBe(field);
     expect(screen.queryByRole('button', { name: 'Lägg till varor' })).toBeNull();
   });
 });
@@ -499,12 +501,11 @@ describe('list controls', () => {
     expect(store.getState().sections).toHaveLength(2);
   });
 
-  it('shares the open items through the share sheet', async () => {
-    const share = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'share', { value: share, configurable: true });
-    const { user } = await setup(seedAC);
+  it('opens the settings sheet on the invite view from the share button', async () => {
+    const { user } = await setup(undefined, true);
     await user.click(screen.getByRole('button', { name: 'Dela' }));
-    expect(share).toHaveBeenCalledWith({ text: 'Grocery List\n- A\n- C' });
-    Reflect.deleteProperty(navigator, 'share');
+    expect(
+      await screen.findByText('De ser den här listan när de loggar in med den e-postadressen.'),
+    ).toBeInTheDocument();
   });
 });
