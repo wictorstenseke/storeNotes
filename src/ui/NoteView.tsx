@@ -83,33 +83,42 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
               </Button>
             </>
           )}
-          {/* Zero height like the top controls: the plus hangs up from the bottom-right corner. */}
-          {!showQuickAdd && (
-            <div className="pointer-events-none sticky bottom-5 z-20 mt-auto flex h-0 justify-end px-5">
-              <GlassSurface
-                width={52}
-                height={52}
-                className="pointer-events-auto -translate-y-full"
-                glass={<PlusIcon className="size-6" />}
-              >
-                <button
-                  type="button"
-                  aria-label="Lägg till varor"
-                  className={`absolute inset-0 z-10 ${GLASS_BUTTON}`}
-                  onClick={() => {
-                    // Focus inside the tap, or iOS won't raise the keyboard: render the bar synchronously first.
-                    flushSync(() => useUi.getState().setShowQuickAdd(true));
-                    const field = document.querySelector<HTMLTextAreaElement>(
-                      'textarea[aria-label="Lägg till vara"]',
-                    );
-                    if (field) focusWithoutScroll(field);
-                  }}
-                />
-              </GlassSurface>
-            </div>
-          )}
         </div>
       </main>
+
+      {/* Outside the scroll area, so it stays put however far the list scrolls (a sticky element
+          drifts when the list ends). Only shown without the bar, so nothing sits under it. */}
+      {!showQuickAdd && (
+        <div
+          className="pointer-events-none absolute inset-x-0 z-20"
+          style={{
+            bottom: keyboardOpen ? '1.25rem' : 'calc(env(safe-area-inset-bottom) + 1.25rem)',
+          }}
+        >
+          <div className="mx-auto flex max-w-xl justify-end px-5">
+            <GlassSurface
+              width={52}
+              height={52}
+              className="pointer-events-auto"
+              glass={<PlusIcon className="size-6" />}
+            >
+              <button
+                type="button"
+                aria-label="Lägg till varor"
+                className={`absolute inset-0 z-10 ${GLASS_BUTTON}`}
+                onClick={() => {
+                  // Focus inside the tap, or iOS won't raise the keyboard: render the bar synchronously first.
+                  flushSync(() => useUi.getState().setShowQuickAdd(true));
+                  const field = document.querySelector<HTMLTextAreaElement>(
+                    'textarea[aria-label="Lägg till vara"]',
+                  );
+                  if (field) focusWithoutScroll(field);
+                }}
+              />
+            </GlassSurface>
+          </div>
+        </div>
+      )}
       {showQuickAdd && <QuickAddBar keyboardOpen={keyboardOpen} />}
     </div>
   );
