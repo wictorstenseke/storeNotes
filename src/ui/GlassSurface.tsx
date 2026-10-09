@@ -19,10 +19,10 @@ type Props = {
 const GLASS =
   "[&_.glass]:flex! [&_.glass]:shadow-[0_2px_12px_rgba(0,0,0,0.1)]! [&_.glass>div]:[text-shadow:none] [&_.glass__warp]:bg-page/55";
 
-// The glowing rim: one hairline edge plus a highlight along the top. On a light page a white ring inside
+// The glowing rim: one hairline edge plus a highlight along the top and a slightly darker edge on the left and right, like iOS. On a light page a white ring inside
 // the hairline reads as a second border, so only dark mode gets a full inner stroke.
 const RIM =
-  "shadow-[0_0_0_0.5px_rgba(0,0,0,0.12),inset_0_1.5px_1.5px_rgba(255,255,255,1)] dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.22),inset_0_1.5px_2px_rgba(255,255,255,0.45),inset_0_-1px_2px_rgba(255,255,255,0.15)]";
+  "shadow-[0_0_0_0.5px_rgba(0,0,0,0.12),inset_0_1.5px_1.5px_rgba(255,255,255,1),inset_1.5px_0_1.5px_-0.5px_rgba(0,0,0,0.1),inset_-1.5px_0_1.5px_-0.5px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.22),inset_0_1.5px_2px_rgba(255,255,255,0.45),inset_0_-1px_2px_rgba(255,255,255,0.15)]";
 
 export function GlassSurface({
   width,
