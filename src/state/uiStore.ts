@@ -6,6 +6,18 @@ import { readSetting, writeSetting } from './deviceSettings';
 // the selection started and `cursor` the end that Shift+arrow moves.
 export type Selection = { sectionId: string; ids: string[]; anchor: string; cursor: string };
 
+function readStores(): Record<string, string> {
+  try {
+    const parsed: unknown = JSON.parse(readSetting('sectionStores') ?? '{}');
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return {};
+    return Object.fromEntries(
+      Object.entries(parsed).filter((e): e is [string, string] => typeof e[1] === 'string'),
+    );
+  } catch {
+    return {};
+  }
+}
+
 function readIds(key: string): string[] {
   try {
     const parsed: unknown = JSON.parse(readSetting(key) ?? '[]');
@@ -18,7 +30,9 @@ function readIds(key: string): string[] {
 type UiState = {
   focusId: string | null;
   hold: Hold | null;
-  storeId: string | null;
+  storeId: string | null; // the store chosen last, where the store order opens
+  fallbackStoreId: string | null; // for lists that sort by store from before each had its own
+  sectionStores: Record<string, string>; // the store each list sorts by, per device
   quickAddSectionId: string | null;
   selection: Selection | null;
   showQuickAdd: boolean; // the add-item bar at the bottom, per device
@@ -28,6 +42,7 @@ type UiState = {
   requestFocus(id: string | null): void;
   setHold(hold: Hold | null): void;
   setStoreId(id: string | null): void;
+  setSectionStore(sectionId: string, id: string): void;
   setQuickAddSectionId(id: string | null): void;
   setSelection(selection: Selection | null): void;
   toggleStoreHint(sectionId: string): void;
@@ -40,6 +55,8 @@ export const useUi = create<UiState>()((set) => ({
   focusId: null,
   hold: null,
   storeId: readSetting('storeId'),
+  fallbackStoreId: readSetting('storeId'),
+  sectionStores: readStores(),
   quickAddSectionId: readSetting('quickAddSectionId'),
   selection: null,
   showQuickAdd: readSetting('showQuickAdd') !== 'false',
@@ -69,6 +86,13 @@ export const useUi = create<UiState>()((set) => ({
         : [...state.hiddenStoreHints, sectionId];
       writeSetting('hiddenStoreHints', JSON.stringify(hiddenStoreHints));
       return { hiddenStoreHints };
+    }),
+  setSectionStore: (sectionId, id) =>
+    set((state) => {
+      const sectionStores = { ...state.sectionStores, [sectionId]: id };
+      writeSetting('sectionStores', JSON.stringify(sectionStores));
+      writeSetting('storeId', id);
+      return { sectionStores, storeId: id };
     }),
   setStoreId: (storeId) => {
     writeSetting('storeId', storeId);

@@ -16,6 +16,8 @@ beforeEach(() => {
     focusId: null,
     hold: null,
     storeId: null,
+    fallbackStoreId: null,
+    sectionStores: {},
     quickAddSectionId: null,
     selection: null,
     hiddenStoreHints: [],
@@ -580,5 +582,25 @@ describe('moving a list', () => {
       .map((el) => (el as HTMLTextAreaElement).value);
     expect(titles).toEqual(['', 'Grocery List']);
     expect(first.title).toBe('Grocery List');
+  });
+});
+
+describe('store per list', () => {
+  it('changes the store of one list only', async () => {
+    const { user } = await setup((note) => {
+      const gifts = note.addSection('Gifts');
+      note.setStoreSort(gifts, true);
+    });
+    const label = (name: string) =>
+      within(screen.getByRole('region', { name })).getByRole('button', {
+        name: /Tryck för att byta butik/,
+      });
+    await user.click(label('Grocery List'));
+    expect(label('Grocery List')).toHaveTextContent(STORES[0].name);
+    expect(label('Gifts')).toHaveTextContent('Ingen butik vald');
+    await user.click(label('Gifts'));
+    await user.click(label('Gifts'));
+    expect(label('Gifts')).toHaveTextContent(STORES[1].name);
+    expect(label('Grocery List')).toHaveTextContent(STORES[0].name);
   });
 });

@@ -174,7 +174,7 @@ export function SectionView({ section }: { section: Section }) {
   const storeOrders = useNote((s) => s.storeOrders);
   const focusId = useUi((s) => s.focusId);
   const hold = useUi((s) => s.hold);
-  const storeId = useUi((s) => s.storeId);
+  const storeId = useUi((s) => s.sectionStores[section.id] ?? s.fallbackStoreId);
   const selection = useUi((s) => s.selection);
   const hideHint = useUi((s) => s.hiddenStoreHints.includes(section.id));
   const collapsed = useUi((s) => s.collapsedSections.includes(section.id));
@@ -337,7 +337,7 @@ export function SectionView({ section }: { section: Section }) {
     },
     onExtend: (dir: -1 | 1) => extend(item.id, item.id, dir),
     onToggle: () =>
-      note.checkItem(item.id, section.store_sort ? useUi.getState().storeId : null),
+      note.checkItem(item.id, activeStore?.id ?? null),
   });
 
   return (
@@ -381,10 +381,10 @@ export function SectionView({ section }: { section: Section }) {
             aria-label={`${activeStore ? activeStore.name : 'Ingen butik vald'}. Tryck för att byta butik`}
             className="shrink-0 cursor-pointer text-[13px] text-notes-ink transition-opacity hover:opacity-70 active:opacity-50"
             onClick={() => {
-              // The store is per device, whether to sort by it is per list.
+              // The store is per list (on this device), and so is whether to sort by it.
               const at = activeStore ? STORES.findIndex((s) => s.id === activeStore.id) : -1;
               const next = STORES[at + 1];
-              if (next) useUi.getState().setStoreId(next.id);
+              if (next) useUi.getState().setSectionStore(section.id, next.id);
               note.setStoreSort(section.id, next !== undefined);
             }}
           >
@@ -398,8 +398,8 @@ export function SectionView({ section }: { section: Section }) {
           hideHint={hideHint}
           onToggleHint={() => ui.toggleStoreHint(section.id)}
           onStore={(id) => {
-            // The store is per device, whether to sort by it is per list.
-            if (id) ui.setStoreId(id);
+            // Both the store and whether to sort by it are per list (the store only on this device).
+            if (id) ui.setSectionStore(section.id, id);
             note.setStoreSort(section.id, id !== null);
           }}
           onRename={() => ui.requestFocus(section.id)}

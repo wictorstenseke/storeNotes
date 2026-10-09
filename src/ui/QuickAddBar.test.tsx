@@ -9,7 +9,7 @@ import { makeStore } from '../test/helpers';
 import { QuickAddBar } from './QuickAddBar';
 
 beforeEach(() => {
-  useUi.setState({ focusId: null, hold: null, storeId: null, quickAddSectionId: null });
+  useUi.setState({ focusId: null, hold: null, storeId: null, fallbackStoreId: null, sectionStores: {}, quickAddSectionId: null });
 });
 
 afterEach(() => {
