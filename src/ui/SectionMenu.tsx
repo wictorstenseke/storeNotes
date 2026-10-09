@@ -54,7 +54,7 @@ export function SectionMenu({
       <DropdownMenu>
         <DropdownMenuTrigger
           aria-label={`Alternativ för ${title || 'lista'}`}
-          className="shrink-0 px-1 text-ink-2"
+          className="-mx-0.5 -my-1.5 grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-ink-2 transition-colors duration-150 hover:bg-ink/5 hover:text-ink active:bg-ink/10"
         >
           <EllipsisIcon className="size-5" />
         </DropdownMenuTrigger>

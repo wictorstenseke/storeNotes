@@ -87,7 +87,7 @@ export function QuickAddBar({ keyboardOpen }: { keyboardOpen: boolean }) {
           <button
             type="button"
             aria-label="Stäng"
-            className="-mr-1.5 -mt-1.5 grid size-8 shrink-0 place-items-center rounded-full text-ink-2 active:bg-ink/10"
+            className="-mr-1.5 -mt-1.5 grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-ink-2 transition-colors duration-150 hover:bg-ink/5 hover:text-ink active:bg-ink/10"
             onClick={() => useUi.getState().setShowQuickAdd(false)}
             {...keepFocus}
           >
