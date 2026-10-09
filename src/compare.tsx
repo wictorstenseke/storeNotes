@@ -1,14 +1,14 @@
 // Dev-only page (http://localhost:5173/compare.html): the same circle and pill built with each glass
 // library, over the same busy background, to compare them side by side.
-import { EllipsisIcon, MenuIcon, ShareIcon, UsersIcon } from 'lucide-react';
-import LiquidGlassJs from 'liquid-glass-js';
-import { LiquidGlass as LiquidGlassReact } from '@liquidglass/react';
-import { createRoot } from 'react-dom/client';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import './index.css';
-import { GlassSurface } from './ui/GlassSurface';
+import { EllipsisIcon, MenuIcon, ShareIcon, UsersIcon } from "lucide-react";
+import LiquidGlassJs from "liquid-glass-js";
+import { LiquidGlass as LiquidGlassReact } from "@liquidglass/react";
+import { createRoot } from "react-dom/client";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import "./index.css";
+import { GlassSurface } from "./ui/GlassSurface";
 
-const ICON = 'size-5 text-ink';
+const ICON = "size-5 text-ink";
 
 function Icons({ n }: { n: 1 | 3 }) {
   return n === 1 ? (
@@ -23,19 +23,37 @@ function Icons({ n }: { n: 1 | 3 }) {
 }
 
 // A background with colour, text and hard edges, so refraction and blur are visible.
-function Scene({ children, sceneRef }: { children: ReactNode; sceneRef?: React.Ref<HTMLDivElement> }) {
+function Scene({
+  children,
+  sceneRef,
+}: {
+  children: ReactNode;
+  sceneRef?: React.Ref<HTMLDivElement>;
+}) {
   return (
     <div
       ref={sceneRef}
       className="relative h-72 overflow-hidden rounded-xl bg-page"
       style={{
         backgroundImage:
-          'linear-gradient(115deg, #ff9a8b 0%, transparent 30%), linear-gradient(250deg, #7aa7ff 0%, transparent 35%)',
+          "linear-gradient(115deg, #ff9a8b 0%, transparent 30%), linear-gradient(250deg, #7aa7ff 0%, transparent 35%)",
       }}
     >
       <div className="space-y-2 p-5 text-[15px] text-ink">
-        {['Mjölk', 'Bröd', 'Kaffe', 'Ost', 'Äpplen', 'Pasta', 'Tomater', 'Smör'].map((t) => (
-          <div key={t} className="flex items-center gap-3 border-b border-line/40 pb-2">
+        {[
+          "Mjölk",
+          "Bröd",
+          "Kaffe",
+          "Ost",
+          "Äpplen",
+          "Pasta",
+          "Tomater",
+          "Smör",
+        ].map((t) => (
+          <div
+            key={t}
+            className="flex items-center gap-3 border-b border-line/40 pb-2"
+          >
             <span className="size-4 rounded-full border border-ink" />
             {t}
           </div>
@@ -46,7 +64,15 @@ function Scene({ children, sceneRef }: { children: ReactNode; sceneRef?: React.R
   );
 }
 
-function Column({ title, note, children }: { title: string; note: string; children: ReactNode }) {
+function Column({
+  title,
+  note,
+  children,
+}: {
+  title: string;
+  note: string;
+  children: ReactNode;
+}) {
   return (
     <section className="min-w-0 flex-1 basis-72">
       <h2 className="text-[17px] font-semibold text-ink">{title}</h2>
@@ -84,12 +110,21 @@ function JsColumn({ dark }: { dark: boolean }) {
     };
     lenses.current = [make(circle.current!, 44), make(pill.current!, 156)];
     const place = () => {
-      lenses.current[0].moveTo(circle.current!.getBoundingClientRect().left, circle.current!.getBoundingClientRect().top);
-      lenses.current[1].moveTo(pill.current!.getBoundingClientRect().left, pill.current!.getBoundingClientRect().top);
+      lenses.current[0].moveTo(
+        circle.current!.getBoundingClientRect().left,
+        circle.current!.getBoundingClientRect().top,
+      );
+      lenses.current[1].moveTo(
+        pill.current!.getBoundingClientRect().left,
+        pill.current!.getBoundingClientRect().top,
+      );
     };
-    window.addEventListener('resize', place);
+    window.addEventListener("resize", place);
+    // The lenses are fixed-position, so follow the placeholders while the page scrolls.
+    window.addEventListener("scroll", place, true);
     return () => {
-      window.removeEventListener('resize', place);
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
       lenses.current.forEach((l) => l.destroy());
     };
   }, []);
@@ -100,10 +135,18 @@ function JsColumn({ dark }: { dark: boolean }) {
 
   return (
     <Scene sceneRef={scene}>
-      <div ref={circle} className="absolute left-5 top-48 grid size-11 place-items-center" style={{ zIndex: 200 }}>
+      <div
+        ref={circle}
+        className="absolute left-5 top-48 grid size-11 place-items-center"
+        style={{ zIndex: 200 }}
+      >
         <Icons n={1} />
       </div>
-      <div ref={pill} className="absolute left-5 top-48 ml-16 flex h-11 w-[156px] items-center justify-around" style={{ zIndex: 200 }}>
+      <div
+        ref={pill}
+        className="absolute left-5 top-48 ml-16 flex h-11 w-[156px] items-center justify-around"
+        style={{ zIndex: 200 }}
+      >
         <Icons n={3} />
       </div>
     </Scene>
@@ -113,15 +156,19 @@ function JsColumn({ dark }: { dark: boolean }) {
 function App() {
   const [dark, setDark] = useState(false);
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark);
+    document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
 
   return (
-    <div className="min-h-screen bg-page p-6">
+    // The app's body is overflow:hidden (fixed shell), so this page scrolls in its own container.
+    <div className="h-full overflow-y-auto bg-page p-6">
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-[22px] font-semibold text-ink">Glass comparison</h1>
-        <button className="rounded-lg border border-line px-3 py-1.5 text-ink" onClick={() => setDark(!dark)}>
-          {dark ? 'Light' : 'Dark'}
+        <button
+          className="rounded-lg border border-line px-3 py-1.5 text-ink"
+          onClick={() => setDark(!dark)}
+        >
+          {dark ? "Light" : "Dark"}
         </button>
       </div>
       <div className="flex flex-wrap gap-6">
@@ -176,4 +223,4 @@ function App() {
   );
 }
 
-createRoot(document.getElementById('root')!).render(<App />);
+createRoot(document.getElementById("root")!).render(<App />);
