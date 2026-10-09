@@ -10,7 +10,7 @@ async function setup(call: CategorizeCall) {
   s().setStoreSort(grocery, true);
   const gifts = s().addSection('Gifts');
   const spy = vi.fn(call);
-  return { s, grocery, gifts, spy, categorizer: new Categorizer(spy, store) };
+  return { store, s, grocery, gifts, spy, categorizer: new Categorizer(spy, store) };
 }
 
 const allDairy: CategorizeCall = async (texts) =>
@@ -106,5 +106,13 @@ describe('Categorizer', () => {
     expect(spy).toHaveBeenCalledTimes(1);
     finish({ Milk: 'dairy' });
     await first;
+  });
+
+  it('can take what to sort by store from the device instead of the list', async () => {
+    const { store, s, gifts, spy } = await setup(allDairy);
+    const categorizer = new Categorizer(spy, store, (section) => section.id === gifts);
+    s().addItem(gifts, 'Lego for Elsa');
+    await categorizer.run();
+    expect(spy).toHaveBeenCalledWith(['Lego for Elsa']);
   });
 });

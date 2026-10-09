@@ -42,7 +42,7 @@ type UiState = {
   requestFocus(id: string | null): void;
   setHold(hold: Hold | null): void;
   setStoreId(id: string | null): void;
-  setSectionStore(sectionId: string, id: string): void;
+  setSectionStore(sectionId: string, id: string | null): void;
   setQuickAddSectionId(id: string | null): void;
   setSelection(selection: Selection | null): void;
   toggleStoreHint(sectionId: string): void;
@@ -87,10 +87,12 @@ export const useUi = create<UiState>()((set) => ({
       writeSetting('hiddenStoreHints', JSON.stringify(hiddenStoreHints));
       return { hiddenStoreHints };
     }),
+  // '' is a choice too: no store on this list, whatever it did before.
   setSectionStore: (sectionId, id) =>
     set((state) => {
-      const sectionStores = { ...state.sectionStores, [sectionId]: id };
+      const sectionStores = { ...state.sectionStores, [sectionId]: id ?? '' };
       writeSetting('sectionStores', JSON.stringify(sectionStores));
+      if (id === null) return { sectionStores };
       writeSetting('storeId', id);
       return { sectionStores, storeId: id };
     }),

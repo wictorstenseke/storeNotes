@@ -1,4 +1,5 @@
 import { isCategory, type Category } from '../domain/categories';
+import type { Section } from '../domain/types';
 import type { NoteStore } from '../state/noteStore';
 
 export type CategorizeCall = (texts: string[]) => Promise<Record<string, Category>>;
@@ -11,6 +12,8 @@ export class Categorizer {
   constructor(
     private call: CategorizeCall,
     private note: Pick<NoteStore, 'getState'>,
+    // Whether this device sorts the section by store. That is a device setting, not part of the list.
+    private sortsByStore: (section: Section) => boolean = (s) => s.store_sort,
   ) {}
 
   async run(): Promise<void> {
@@ -20,7 +23,7 @@ export class Categorizer {
       const { items, sections } = this.note.getState();
       // Only sections sorted by store need categories. Everything else stays
       // on the device.
-      const sorted = new Set(sections.filter((s) => s.store_sort).map((s) => s.id));
+      const sorted = new Set(sections.filter(this.sortsByStore).map((s) => s.id));
       const untagged = items.filter(
         (i) => i.category === null && i.text.trim() !== '' && sorted.has(i.section_id),
       );

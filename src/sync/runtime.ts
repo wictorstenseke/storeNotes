@@ -1,8 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Category } from '../domain/categories';
+import { sectionStoreId } from '../domain/sectionStore';
 import { readSetting, writeSetting } from '../state/deviceSettings';
 import { createNoteStore, type NoteStore } from '../state/noteStore';
 import { showNotice, useSyncStatus } from '../state/syncStatus';
+import { useUi } from '../state/uiStore';
 import type { Invite } from '../ui/InviteBanner';
 import type { Person } from '../ui/SettingsSheet';
 import { Categorizer } from './categorizer';
@@ -55,15 +57,29 @@ export async function startRuntime(sb: SupabaseClient): Promise<Runtime> {
   });
   await store.getState().load(id);
 
-  categorizer = new Categorizer(async (texts) => {
-    const { data, error } = await sb.functions.invoke('categorize', { body: { texts } });
-    if (error) throw error;
-    return (data as { categories: Record<string, Category> }).categories;
-  }, store);
+  categorizer = new Categorizer(
+    async (texts) => {
+      const { data, error } = await sb.functions.invoke('categorize', { body: { texts } });
+      if (error) throw error;
+      return (data as { categories: Record<string, Category> }).categories;
+    },
+    store,
+    (section) =>
+      sectionStoreId(section, useUi.getState().sectionStores, useUi.getState().fallbackStoreId) !==
+      null,
+  );
+  // Choosing a store for a list on this device is what makes its items need categories.
+  const stopStores = useUi.subscribe((state, prev) => {
+    if (state.sectionStores !== prev.sectionStores) void categorizer?.run();
+  });
 
   engine = new SyncEngine(db, outbox, supabaseRemote(sb), id, {
     // Changes from the other device can include untagged items.
-    onChange: () => void store.getState().reload().then(() => categorizer?.run()),
+    onChange: () =>
+      void store
+        .getState()
+        .reload()
+        .then(() => categorizer?.run()),
     onRejected: () => showNotice('En ändring kunde inte sparas.'),
     onStatus: (pending) => useSyncStatus.setState({ pending }),
   });
@@ -77,6 +93,7 @@ export async function startRuntime(sb: SupabaseClient): Promise<Runtime> {
 
   const stop = () => {
     stopEngine();
+    stopStores();
     window.removeEventListener('online', setOnline);
     window.removeEventListener('offline', setOnline);
   };

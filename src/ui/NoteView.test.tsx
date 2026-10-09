@@ -225,9 +225,9 @@ describe('store order', () => {
       store.getState().addSection('Gifts');
     });
     await chooseStore(user, STORE.name);
-    const sections = store.getState().sections;
-    expect(sections.find((s) => s.title === 'Grocery List')?.store_sort).toBe(true);
-    expect(sections.find((s) => s.title === 'Gifts')?.store_sort).toBe(false);
+    const gifts = store.getState().sections.find((s) => s.title === 'Gifts')!;
+    expect(useUi.getState().sectionStores).not.toHaveProperty(gifts.id);
+    expect(gifts.store_sort).toBe(false);
     await user.click(screen.getByRole('button', { name: 'Alternativ för Gifts' }));
     expect(await screen.findByRole('menuitemradio', { name: 'Ingen butik' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.queryByRole('menuitemcheckbox', { name: 'Sortera efter butik' })).toBeNull();
@@ -602,5 +602,25 @@ describe('store per list', () => {
     await user.click(label('Gifts'));
     expect(label('Gifts')).toHaveTextContent(STORES[1].name);
     expect(label('Grocery List')).toHaveTextContent(STORES[0].name);
+  });
+});
+
+describe('store choice stays on this device', () => {
+  it('writes nothing to the shared list when a store is chosen', async () => {
+    const { store, user } = await setup(seedAC);
+    const before = JSON.stringify(store.getState().sections);
+    await chooseStore(user, STORES[0].name);
+    await user.click(screen.getByRole('button', { name: /Tryck för att byta butik/ }));
+    expect(JSON.stringify(store.getState().sections)).toBe(before);
+    expect(localStorage.getItem('storenotes.sectionStores')).toContain(STORES[1].id);
+  });
+
+  it('sorts by store from the choice alone, for a list that was never flagged', async () => {
+    const { store, user } = await setup(seedAC);
+    store.getState().setStoreSort(store.getState().sections[0].id, false);
+    await chooseStore(user, STORES[0].name);
+    expect(screen.getByRole('button', { name: /Tryck för att byta butik/ })).toHaveTextContent(
+      STORES[0].name,
+    );
   });
 });

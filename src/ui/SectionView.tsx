@@ -23,6 +23,7 @@ import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { effectiveOrder } from '../domain/learning';
 import { rangeIds, toggleId } from '../domain/selection';
 import { sortDone, sortOpen } from '../domain/sort';
+import { sectionStoreId } from '../domain/sectionStore';
 import { STORES, getStore } from '../domain/stores';
 import type { Item, Section } from '../domain/types';
 import { useNote, useNoteStore } from '../state/context';
@@ -174,7 +175,7 @@ export function SectionView({ section }: { section: Section }) {
   const storeOrders = useNote((s) => s.storeOrders);
   const focusId = useUi((s) => s.focusId);
   const hold = useUi((s) => s.hold);
-  const storeId = useUi((s) => s.sectionStores[section.id] ?? s.fallbackStoreId);
+  const storeId = useUi((s) => sectionStoreId(section, s.sectionStores, s.fallbackStoreId));
   const selection = useUi((s) => s.selection);
   const hideHint = useUi((s) => s.hiddenStoreHints.includes(section.id));
   const collapsed = useUi((s) => s.collapsedSections.includes(section.id));
@@ -184,7 +185,7 @@ export function SectionView({ section }: { section: Section }) {
 
   const mine = useMemo(() => items.filter((i) => i.section_id === section.id), [items, section.id]);
 
-  const activeStore = section.store_sort ? getStore(storeId) : undefined;
+  const activeStore = getStore(storeId);
 
   const order = useMemo(() => {
     if (!activeStore) return null;
@@ -381,11 +382,9 @@ export function SectionView({ section }: { section: Section }) {
             aria-label={`${activeStore ? activeStore.name : 'Ingen butik vald'}. Tryck för att byta butik`}
             className="shrink-0 cursor-pointer text-[13px] text-notes-ink transition-opacity hover:opacity-70 active:opacity-50"
             onClick={() => {
-              // The store is per list (on this device), and so is whether to sort by it.
-              const at = activeStore ? STORES.findIndex((s) => s.id === activeStore.id) : -1;
+                            const at = activeStore ? STORES.findIndex((s) => s.id === activeStore.id) : -1;
               const next = STORES[at + 1];
-              if (next) useUi.getState().setSectionStore(section.id, next.id);
-              note.setStoreSort(section.id, next !== undefined);
+              useUi.getState().setSectionStore(section.id, next?.id ?? null);
             }}
           >
             {activeStore ? activeStore.name : 'Ingen butik vald'}
@@ -393,14 +392,13 @@ export function SectionView({ section }: { section: Section }) {
         )}
         <SectionMenu
           title={section.title}
-          storeSort={section.store_sort}
+          storeSort={activeStore !== undefined}
           storeId={storeId}
           hideHint={hideHint}
           onToggleHint={() => ui.toggleStoreHint(section.id)}
           onStore={(id) => {
-            // Both the store and whether to sort by it are per list (the store only on this device).
-            if (id) ui.setSectionStore(section.id, id);
-            note.setStoreSort(section.id, id !== null);
+            // Per list, and only on this device, so it never changes the list for the people it is shared with.
+            ui.setSectionStore(section.id, id);
           }}
           onRename={() => ui.requestFocus(section.id)}
           onDelete={() => note.deleteSection(section.id)}
