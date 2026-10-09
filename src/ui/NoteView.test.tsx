@@ -292,7 +292,7 @@ describe('empty state', () => {
       store.getState().deleteSection(sectionId);
     });
     expect(screen.getByText('Inga listor än')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '+ Ny lista' })).toBeNull();
+    expect(screen.queryAllByRole('button', { name: 'Ny lista' })).toHaveLength(0);
     expect(screen.queryByRole('textbox', { name: 'Lägg till vara' })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Skapa lista' }));
     expect(store.getState().sections).toHaveLength(1);
@@ -309,7 +309,8 @@ describe('empty state', () => {
 describe('sections', () => {
   it('adds a section and focuses its title', async () => {
     const { store, user } = await setup();
-    await user.click(screen.getByRole('button', { name: '+ Ny lista' }));
+    // Two of them: the glass pill at the top and the one under the lists.
+    await user.click(screen.getAllByRole('button', { name: 'Ny lista' }).at(-1)!);
     expect(store.getState().sections).toHaveLength(2);
     const titles = screen.getAllByRole('textbox', { name: 'Listrubrik' });
     expect(document.activeElement).toBe(titles[1]);
@@ -497,7 +498,7 @@ describe('quick-add toggle', () => {
 describe('list controls', () => {
   it('adds a list from the top button', async () => {
     const { store, user } = await setup();
-    await user.click(screen.getByRole('button', { name: 'Ny lista' }));
+    await user.click(screen.getAllByRole('button', { name: 'Ny lista' })[0]);
     expect(store.getState().sections).toHaveLength(2);
   });
 

@@ -78,9 +78,16 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
               {sorted.map((section) => (
                 <SectionView key={section.id} section={section} />
               ))}
-              <Button variant="outline" className="mx-5 mb-10 mt-9 self-start" onClick={addSection}>
-                + Ny lista
-              </Button>
+              <GlassSurface width={124} height={44} className="mx-5 mb-10 mt-9 self-start">
+                <button
+                  type="button"
+                  className={`absolute inset-0 z-10 flex items-center justify-center gap-1.5 text-[15px] text-ink ${GLASS_BUTTON}`}
+                  onClick={addSection}
+                >
+                  <PlusIcon className="size-5" />
+                  Ny lista
+                </button>
+              </GlassSurface>
             </>
           )}
         </div>

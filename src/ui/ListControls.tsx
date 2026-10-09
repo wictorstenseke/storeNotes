@@ -1,4 +1,4 @@
-import { ListPlusIcon, UserPlusIcon } from 'lucide-react';
+import { ListPlusIcon, UserRoundPlusIcon } from 'lucide-react';
 import { useUi } from '../state/uiStore';
 import { GLASS_BUTTON, GlassSurface } from './GlassSurface';
 
@@ -20,7 +20,7 @@ export function ListControls({ onNewList }: { onNewList(): void }) {
           className={`grid flex-1 place-items-center text-ink ${GLASS_BUTTON}`}
           onClick={() => useUi.getState().requestSheet('invite')}
         >
-          <UserPlusIcon className="size-5" />
+          <UserRoundPlusIcon className="size-5" />
         </button>
       </div>
     </GlassSurface>
