@@ -73,16 +73,26 @@ export async function startRuntime(sb: SupabaseClient): Promise<Runtime> {
     if (state.sectionStores !== prev.sectionStores) void categorizer?.run();
   });
 
-  engine = new SyncEngine(db, outbox, supabaseRemote(sb), id, {
-    // Changes from the other device can include untagged items.
-    onChange: () =>
-      void store
-        .getState()
-        .reload()
-        .then(() => categorizer?.run()),
-    onRejected: () => showNotice('En ändring kunde inte sparas.'),
-    onStatus: (pending) => useSyncStatus.setState({ pending }),
-  });
+  engine = new SyncEngine(
+    db,
+    outbox,
+    supabaseRemote(sb),
+    id,
+    {
+      // Changes from the other device can include untagged items.
+      onChange: () =>
+        void store
+          .getState()
+          .reload()
+          .then(() => categorizer?.run()),
+      onRejected: () => showNotice('En ändring kunde inte sparas.'),
+      onStatus: (pending) => useSyncStatus.setState({ pending }),
+      onNew: (ids) => useUi.getState().markFresh(ids),
+      onSeeded: () => writeSetting('seededListId', id),
+    },
+    // A list this device has not held before arrives whole. None of that is news.
+    readSetting('seededListId') === id,
+  );
   const stopEngine = engine.start();
 
   const setOnline = () => useSyncStatus.setState({ online: navigator.onLine });
@@ -106,6 +116,7 @@ export async function startRuntime(sb: SupabaseClient): Promise<Runtime> {
       stop();
       await db.delete();
       writeSetting('listId', null);
+      writeSetting('seededListId', null);
       // This device only. The default would end every session of the account,
       // signing out the other phone when both use the same login.
       await sb.auth.signOut({ scope: 'local' });

@@ -21,6 +21,10 @@ export type SyncHooks = {
   onChange(): void;
   onRejected(): void;
   onStatus?(pending: number): void;
+  // Open items that came from elsewhere and were not on this device before.
+  onNew?(ids: string[]): void;
+  // The first full copy of the list is stored.
+  onSeeded?(): void;
 };
 
 const TABLES: TableName[] = ['sections', 'items', 'store_orders'];
@@ -43,6 +47,11 @@ function merge(local: Row | undefined, incoming: Row, fields: Set<string> | unde
   return merged;
 }
 
+// An item made on this device is stored here before it is sent, so one that
+// arrives with no local copy and no queued change was added somewhere else.
+const isNew = (table: TableName, row: Row, local: Row | undefined, queued: boolean): boolean =>
+  table === 'items' && !local && !queued && !row.checked;
+
 export class SyncEngine {
   private current: Promise<void> | null = null;
   private again = false;
@@ -62,6 +71,9 @@ export class SyncEngine {
     private remote: Remote,
     private listId: string,
     private hooks: SyncHooks,
+    // False until this device holds a first copy of the list. Everything in
+    // that copy is new to the device, so none of it is reported as new.
+    private seeded = true,
   ) {}
 
   // Send everything queued. A call made while a flush is running waits for
@@ -128,6 +140,7 @@ export class SyncEngine {
       const epoch = this.epoch;
       const snapshot = await this.remote.fetchAll(this.listId);
       if (!snapshot) return;
+      const added: string[] = [];
       const applied = await db.transaction(
         'rw',
         [db.sections, db.items, db.store_orders, db.outbox],
@@ -143,7 +156,9 @@ export class SyncEngine {
               const key = keyOf(table, row);
               seen.add(key);
               const local = (await store.get(primaryKey(table, row))) as Row | undefined;
-              await store.put(merge(local, row, pending.get(`${table}:${key}`)));
+              const fields = pending.get(`${table}:${key}`);
+              if (isNew(table, row, local, Boolean(fields))) added.push(key);
+              await store.put(merge(local, row, fields));
             }
             for (const local of (await store.toArray()) as Row[]) {
               const key = keyOf(table, local);
@@ -156,6 +171,12 @@ export class SyncEngine {
         },
       );
       if (applied) {
+        if (!this.seeded) {
+          this.seeded = true;
+          this.hooks.onSeeded?.();
+        } else if (added.length > 0) {
+          this.hooks.onNew?.(added);
+        }
         this.hooks.onChange();
         return;
       }
@@ -165,6 +186,7 @@ export class SyncEngine {
   async applyRemote(table: TableName, row: Row): Promise<void> {
     const { db } = this;
     this.epoch += 1;
+    let added = false;
     await db.transaction('rw', [db.sections, db.items, db.store_orders, db.outbox], async () => {
       const store = db.table(table);
       const key = primaryKey(table, row);
@@ -174,8 +196,11 @@ export class SyncEngine {
       }
       const pending = await this.outbox.pendingFields();
       const local = (await store.get(key)) as Row | undefined;
-      await store.put(merge(local, row, pending.get(`${table}:${keyOf(table, row)}`)));
+      const fields = pending.get(`${table}:${keyOf(table, row)}`);
+      added = isNew(table, row, local, Boolean(fields));
+      await store.put(merge(local, row, fields));
     });
+    if (added && this.seeded) this.hooks.onNew?.([keyOf(table, row)]);
     this.hooks.onChange();
   }
 

@@ -198,3 +198,21 @@
     color: inherit;
   }
 }
+
+/* A line someone else added is tinted like a selected line. Once it has been
+   in view it holds for three seconds and then fades. There is no end keyframe,
+   so it fades to whatever the line has underneath: nothing, or the selection. */
+[data-fresh='new'] {
+  background-color: --alpha(var(--notes) / 20%);
+}
+
+[data-fresh='seen'] {
+  animation: fresh-fade 4.5s ease-in-out;
+}
+
+@keyframes fresh-fade {
+  0%,
+  66% {
+    background-color: --alpha(var(--notes) / 20%);
+  }
+}

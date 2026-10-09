@@ -9,11 +9,11 @@ afterEach(() => {
   for (const engine of engines.splice(0)) engine.stop();
 });
 
-async function client(remote: FakeRemote, prefix: string) {
+async function client(remote: FakeRemote, prefix: string, seeded = true) {
   let n = 0;
   const ctx = await makeStore({ newId: () => `${prefix}-${++n}` });
-  const hooks = { onChange: vi.fn(), onRejected: vi.fn() };
-  const engine = new SyncEngine(ctx.db, ctx.outbox, remote, 'list-1', hooks);
+  const hooks = { onChange: vi.fn(), onRejected: vi.fn(), onNew: vi.fn(), onSeeded: vi.fn() };
+  const engine = new SyncEngine(ctx.db, ctx.outbox, remote, 'list-1', hooks, seeded);
   engines.push(engine);
   const applying: Promise<void>[] = [];
   remote.subscribe('list-1', (table, row) => {
@@ -211,6 +211,75 @@ describe('two devices', () => {
     expect(remote.rows.items.get(item)).toMatchObject({ text: 'Milk', checked: true });
     expect(a.s().items[0]).toMatchObject({ text: 'Milk', checked: true });
     expect(b.s().items[0]).toMatchObject({ text: 'Milk', checked: true });
+  });
+});
+
+describe('items new to this device', () => {
+  async function pair(seeded = true) {
+    const remote = new FakeRemote();
+    const a = await client(remote, 'a');
+    const b = await client(remote, 'b', seeded);
+    const section = a.s().addSection('Grocery List');
+    await a.settle();
+    return { remote, a, b, section };
+  }
+
+  it('reports an item the other device adds, and not to the device that added it', async () => {
+    const { a, b, section } = await pair();
+    const item = a.s().addItem(section, 'Milk');
+    await a.settle();
+    await b.settle();
+    expect(b.hooks.onNew).toHaveBeenCalledWith([item]);
+    expect(a.hooks.onNew).not.toHaveBeenCalled();
+  });
+
+  it('reports what was added while this device was away, once', async () => {
+    const { remote, a, b, section } = await pair();
+    await b.settle();
+    const [milk, eggs] = a.s().addItems(section, ['Milk', 'Eggs']);
+    await a.s().idle();
+    // Only the server has them: b was not listening.
+    for (const row of await a.db.items.toArray()) remote.rows.items.set(row.id, { ...row });
+    await b.engine.refetch();
+    expect(b.hooks.onNew).toHaveBeenCalledTimes(1);
+    expect([...b.hooks.onNew.mock.calls[0][0]].sort()).toEqual([milk, eggs].sort());
+    await b.engine.refetch();
+    expect(b.hooks.onNew).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not report a later change to an item already here', async () => {
+    const { a, b, section } = await pair();
+    const item = a.s().addItem(section, 'Mlik');
+    await a.settle();
+    await b.settle();
+    a.s().setItemText(item, 'Milk');
+    await a.settle();
+    await b.settle();
+    expect(b.hooks.onNew).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not report an item that arrives already checked off', async () => {
+    const { remote, b, section } = await pair();
+    remote.rows.items.set('x', { id: 'x', list_id: 'list-1', section_id: section, text: 'Milk', checked: true });
+    await b.engine.refetch();
+    await b.engine.applyRemote('items', { id: 'y', list_id: 'list-1', section_id: section, text: 'Eggs', checked: true });
+    expect(b.hooks.onNew).not.toHaveBeenCalled();
+  });
+
+  it('reports nothing from the first copy of a list, only from what comes after', async () => {
+    const { a, b, section } = await pair(false);
+    a.s().addItem(section, 'Milk');
+    await a.settle();
+    await b.engine.refetch();
+    expect(b.hooks.onNew).not.toHaveBeenCalled();
+    expect(b.hooks.onSeeded).toHaveBeenCalledTimes(1);
+
+    const later = a.s().addItem(section, 'Eggs');
+    await a.settle();
+    await b.settle();
+    expect(b.hooks.onNew).toHaveBeenCalledWith([later]);
+    await b.engine.refetch();
+    expect(b.hooks.onSeeded).toHaveBeenCalledTimes(1);
   });
 });
 

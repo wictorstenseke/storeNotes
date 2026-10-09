@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -28,6 +29,7 @@ import { STORES, getStore } from '../domain/stores';
 import type { Item, Section } from '../domain/types';
 import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
+import { useSeen } from './useSeen';
 import { DoneGroup } from './DoneGroup';
 import { ItemLine } from './ItemLine';
 import { MOTION } from './motion';
@@ -137,21 +139,37 @@ type RowProps = {
   id: string;
   draggable: boolean;
   selected: boolean;
+  fresh: boolean; // someone else added it and its highlight has not faded yet
   onMouseDown(event: MouseEvent): void;
   onMouseEnter(event: MouseEvent): void;
   children: ReactNode;
 };
 
-function Row({ id, draggable, selected, onMouseDown, onMouseEnter, children }: RowProps) {
+function Row({ id, draggable, selected, fresh, onMouseDown, onMouseEnter, children }: RowProps) {
   const { setNodeRef, listeners, transform, transition, isDragging } = useSortable({
     id,
     disabled: !draggable,
   });
+  const [node, setNode] = useState<HTMLDivElement | null>(null);
+  const ref = useCallback(
+    (el: HTMLDivElement | null) => {
+      setNodeRef(el);
+      setNode(el);
+    },
+    [setNodeRef],
+  );
+  // The highlight holds until the line has actually been in view, then fades (index.css).
+  const seen = useSeen(node, fresh);
   return (
     <div
-      ref={setNodeRef}
+      ref={ref}
       data-draggable={draggable}
       data-selected={selected}
+      data-fresh={fresh ? (seen ? 'seen' : 'new') : undefined}
+      onAnimationEnd={(event) => {
+        // Animations inside the line bubble up here too.
+        if (fresh && event.target === event.currentTarget) useUi.getState().clearFresh(id);
+      }}
       className={selected ? 'bg-notes/20' : undefined}
       style={{
         transform: CSS.Translate.toString(transform),
@@ -177,6 +195,7 @@ export function SectionView({ section }: { section: Section }) {
   const hold = useUi((s) => s.hold);
   const storeId = useUi((s) => sectionStoreId(section, s.sectionStores, s.fallbackStoreId));
   const selection = useUi((s) => s.selection);
+  const freshIds = useUi((s) => s.freshIds);
   const hideHint = useUi((s) => s.hiddenStoreHints.includes(section.id));
   const collapsed = useUi((s) => s.collapsedSections.includes(section.id));
   const { setNodeRef, listeners, transform, transition, isDragging } = useSortable({
@@ -431,6 +450,7 @@ export function SectionView({ section }: { section: Section }) {
                   id={item.id}
                   draggable={manual}
                   selected={selectedIds.has(item.id)}
+                  fresh={freshIds.includes(item.id)}
                   onMouseDown={(event) => onRowMouseDown(event, item.id)}
                   onMouseEnter={(event) => onRowMouseEnter(event, item.id)}
                 >

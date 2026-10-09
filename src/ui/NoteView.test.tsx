@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Category } from '../domain/categories';
 import { byManual, sortOpen } from '../domain/sort';
 import { STORES } from '../domain/stores';
@@ -23,6 +23,7 @@ beforeEach(() => {
     hiddenStoreHints: [],
     showQuickAdd: true,
     collapsedSections: [],
+    freshIds: [],
   });
 });
 
@@ -622,5 +623,71 @@ describe('store choice stays on this device', () => {
     expect(screen.getByRole('button', { name: /Tryck för att byta butik/ })).toHaveTextContent(
       STORES[0].name,
     );
+  });
+});
+
+describe('items someone else added', () => {
+  const row = (text: string) =>
+    fields().find((el) => el.value === text)!.closest('[data-draggable]') as HTMLElement;
+  const idOf = (store: Awaited<ReturnType<typeof setup>>['store'], text: string) =>
+    store.getState().items.find((i) => i.text === text)!.id;
+  // jsdom has no AnimationEvent, so there React listens for the prefixed event.
+  const endAnimation = (el: Element) =>
+    fireEvent(el, new Event('webkitAnimationEnd', { bubbles: true }));
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('marks the line until its highlight has faded, and leaves the others alone', async () => {
+    const { store } = await setup(seedAC);
+    act(() => useUi.getState().markFresh([idOf(store, 'C')]));
+    expect(row('C')).toHaveAttribute('data-fresh', 'seen');
+    expect(row('A')).not.toHaveAttribute('data-fresh');
+
+    endAnimation(row('C'));
+    expect(row('C')).not.toHaveAttribute('data-fresh');
+    expect(useUi.getState().freshIds).toEqual([]);
+  });
+
+  it('keeps the highlight when an animation inside the line ends', async () => {
+    const { store } = await setup(seedAC);
+    act(() => useUi.getState().markFresh([idOf(store, 'C')]));
+    endAnimation(fields()[1]);
+    expect(row('C')).toHaveAttribute('data-fresh', 'seen');
+  });
+
+  it('starts fading only once the line is on screen', async () => {
+    const watching = new Map<Element, (entries: { isIntersecting: boolean }[]) => void>();
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(private report: (entries: { isIntersecting: boolean }[]) => void) {}
+        observe(el: Element) {
+          watching.set(el, this.report);
+        }
+        disconnect() {}
+      },
+    );
+    const { store } = await setup(seedAC);
+    act(() => useUi.getState().markFresh([idOf(store, 'C')]));
+    expect(row('C')).toHaveAttribute('data-fresh', 'new');
+
+    act(() => watching.get(row('C'))!([{ isIntersecting: true }]));
+    expect(row('C')).toHaveAttribute('data-fresh', 'seen');
+  });
+
+  it('waits for the app to be in front before it starts fading', async () => {
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    const { store } = await setup(seedAC);
+    act(() => useUi.getState().markFresh([idOf(store, 'C')]));
+    expect(row('C')).toHaveAttribute('data-fresh', 'new');
+
+    visibility.mockReturnValue('visible');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(row('C')).toHaveAttribute('data-fresh', 'seen');
+    visibility.mockRestore();
   });
 });

@@ -39,6 +39,7 @@ type UiState = {
   sheetRequest: 'invite' | null; // something outside the settings sheet asking it to open on a view
   hiddenStoreHints: string[]; // lists that hide the store text beside their menu, per device
   collapsedSections: string[]; // lists folded to just their title, per device
+  freshIds: string[]; // items someone else added, until their highlight has faded
   requestFocus(id: string | null): void;
   setHold(hold: Hold | null): void;
   setStoreId(id: string | null): void;
@@ -49,6 +50,8 @@ type UiState = {
   toggleCollapsed(sectionId: string): void;
   setShowQuickAdd(show: boolean): void;
   requestSheet(view: 'invite' | null): void;
+  markFresh(ids: string[]): void;
+  clearFresh(id: string): void;
 };
 
 export const useUi = create<UiState>()((set) => ({
@@ -63,10 +66,13 @@ export const useUi = create<UiState>()((set) => ({
   sheetRequest: null,
   hiddenStoreHints: readIds('hiddenStoreHints'),
   collapsedSections: readIds('collapsedSections'),
+  freshIds: [],
   requestFocus: (focusId) => set({ focusId }),
   setHold: (hold) => set({ hold }),
   setSelection: (selection) => set({ selection }),
   requestSheet: (sheetRequest) => set({ sheetRequest }),
+  markFresh: (ids) => set((state) => ({ freshIds: [...new Set([...state.freshIds, ...ids])] })),
+  clearFresh: (id) => set((state) => ({ freshIds: state.freshIds.filter((other) => other !== id) })),
   setShowQuickAdd: (showQuickAdd) => {
     writeSetting('showQuickAdd', String(showQuickAdd));
     set({ showQuickAdd });
