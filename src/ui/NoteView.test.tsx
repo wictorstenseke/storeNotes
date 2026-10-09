@@ -650,6 +650,20 @@ describe('items someone else added', () => {
     expect(useUi.getState().freshIds).toEqual([]);
   });
 
+  it('highlights a line that arrived empty once its text arrives', async () => {
+    // The other device sends the empty line first and the text when the field is left.
+    const { store } = await setup(seedAC);
+    let id = '';
+    act(() => {
+      id = store.getState().addItem(store.getState().sections[0].id, '');
+      useUi.getState().markFresh([id]);
+    });
+    expect(lines()).toEqual(['A', 'C']);
+
+    act(() => store.getState().setItemText(id, 'B'));
+    expect(row('B')).toHaveAttribute('data-fresh', 'seen');
+  });
+
   it('keeps the highlight when an animation inside the line ends', async () => {
     const { store } = await setup(seedAC);
     act(() => useUi.getState().markFresh([idOf(store, 'C')]));
