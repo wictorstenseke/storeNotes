@@ -1,4 +1,4 @@
-import { ChevronLeftIcon, ChevronRightIcon, MenuIcon } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, LogOutIcon, MenuIcon } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -149,21 +149,6 @@ export function SettingsPanel({
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
-      <Group title="Delning">
-        {/* One row: the people have no action of their own, so they are its description. */}
-        <button type="button" className={`${ROW} py-2 active:bg-field`} onClick={onInvite}>
-          <span className="flex min-w-0 flex-col">
-            <span>Bjud in</span>
-            {people.map((person) => (
-              <span key={person.email} className="flex gap-1 text-[13px] text-ink-2">
-                <span className="min-w-0 truncate">{person.email}</span>
-                {person.pending && <span className="shrink-0">· Inbjuden</span>}
-              </span>
-            ))}
-          </span>
-          <ChevronRightIcon className="size-5 shrink-0 text-ink-2" />
-        </button>
-      </Group>
       <Group title="Visning">
         <div className={`${ROW} py-2`}>
           <div className="flex min-w-0 flex-col" onClick={() => setShowQuickAdd(!showQuickAdd)}>
@@ -187,9 +172,25 @@ export function SettingsPanel({
       <Group title="Butik">
         <NavRow onClick={onEditOrder}>Ändra butikens gångar</NavRow>
       </Group>
+      <Group title="Delning">
+        {/* One row: the people have no action of their own, so they are its description. */}
+        <button type="button" className={`${ROW} py-2 active:bg-field`} onClick={onInvite}>
+          <span className="flex min-w-0 flex-col">
+            <span>Bjud in</span>
+            {people.map((person) => (
+              <span key={person.email} className="flex gap-1 text-[13px] text-ink-2">
+                <span className="min-w-0 truncate">{person.email}</span>
+                {person.pending && <span className="shrink-0">· Inbjuden</span>}
+              </span>
+            ))}
+          </span>
+          <ChevronRightIcon className="size-5 shrink-0 text-ink-2" />
+        </button>
+      </Group>
       <Group>
         <button type="button" className={`${ROW} active:bg-field`} onClick={onSignOut}>
           Logga ut
+          <LogOutIcon className="size-5 shrink-0 text-ink-2" />
         </button>
       </Group>
     </div>
