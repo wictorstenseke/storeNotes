@@ -1,4 +1,4 @@
-import { PlusIcon, ShoppingBasketIcon } from 'lucide-react';
+import { ListPlusIcon, PlusIcon, ShoppingBasketIcon } from 'lucide-react';
 import { useMemo, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { Button } from '@/components/ui/button';
@@ -78,16 +78,14 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
               {sorted.map((section) => (
                 <SectionView key={section.id} section={section} />
               ))}
-              <GlassSurface width={124} height={44} className="mx-5 mb-10 mt-9 self-start">
-                <button
-                  type="button"
-                  className={`absolute inset-0 z-10 flex items-center justify-center gap-1.5 text-[15px] text-ink ${GLASS_BUTTON}`}
-                  onClick={addSection}
-                >
-                  <PlusIcon className="size-5" />
-                  Ny lista
-                </button>
-              </GlassSurface>
+              <button
+                type="button"
+                className="mx-5 mb-10 mt-9 flex items-center gap-2 self-start text-[15px] text-notes-ink transition-opacity active:opacity-60"
+                onClick={addSection}
+              >
+                <ListPlusIcon className="size-5" />
+                Ny lista
+              </button>
             </>
           )}
         </div>
