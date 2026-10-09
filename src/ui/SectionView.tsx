@@ -15,7 +15,7 @@ import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { effectiveOrder } from '../domain/learning';
 import { rangeIds, toggleId } from '../domain/selection';
 import { sortDone, sortOpen } from '../domain/sort';
-import { getStore } from '../domain/stores';
+import { STORES, getStore } from '../domain/stores';
 import type { Item, Section } from '../domain/types';
 import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
@@ -300,11 +300,22 @@ export function SectionView({ section }: { section: Section }) {
           onCommit={(title) => note.renameSection(section.id, title)}
           onEnter={() => startLine(null, open.length)}
         />
-        {/* The store is chosen in the list's menu; name it here (or say none is chosen) so the choice is visible. */}
+        {/* Names the store (or says none is chosen). Tap to step through none and each store; the menu has the same choice. */}
         {!hideHint && (
-          <span className="shrink-0 text-[13px] text-ink-2">
+          <button
+            type="button"
+            aria-label={`${activeStore ? activeStore.name : 'Ingen butik vald'}. Tryck för att byta butik`}
+            className="shrink-0 text-[13px] text-notes-ink active:opacity-60"
+            onClick={() => {
+              // The store is per device, whether to sort by it is per list.
+              const at = activeStore ? STORES.findIndex((s) => s.id === activeStore.id) : -1;
+              const next = STORES[at + 1];
+              if (next) useUi.getState().setStoreId(next.id);
+              note.setStoreSort(section.id, next !== undefined);
+            }}
+          >
             {activeStore ? activeStore.name : 'Ingen butik vald'}
-          </span>
+          </button>
         )}
         <SectionMenu
           title={section.title}

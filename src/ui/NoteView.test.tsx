@@ -510,3 +510,21 @@ describe('list controls', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('store label', () => {
+  it('steps through no store and each store when tapped', async () => {
+    const { user } = await setup();
+    const grocery = screen.getByRole('region', { name: 'Grocery List' });
+    const names = STORES.map((s) => s.name);
+    const label = () => within(grocery).getByRole('button', { name: /Tryck för att byta butik/ });
+    // The list starts with store sorting on but no store chosen on this device.
+    await user.click(label());
+    expect(label()).toHaveTextContent(names[0]);
+    await user.click(label());
+    expect(label()).toHaveTextContent(names[1]);
+    await user.click(label());
+    expect(label()).toHaveTextContent('Ingen butik vald');
+    await user.click(label());
+    expect(label()).toHaveTextContent(names[0]);
+  });
+});
