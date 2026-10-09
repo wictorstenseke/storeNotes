@@ -47,8 +47,8 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
           {/* Zero height, so the button hangs out of it and stays in view while the list scrolls. */}
           <div className="pointer-events-none sticky top-[calc(env(safe-area-inset-top)+1.25rem)] z-20 mt-5 h-0 px-5">
             <div className="flex items-start justify-between">
-              {sorted.length > 0 ? <ListControls onNewList={addSection} /> : <span />}
               <div className="pointer-events-auto w-fit">{header}</div>
+              {sorted.length > 0 ? <ListControls onNewList={addSection} /> : <span />}
             </div>
           </div>
           <div className="flex h-11 items-center px-5">
