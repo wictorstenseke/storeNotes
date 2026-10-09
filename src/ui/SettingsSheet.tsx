@@ -20,7 +20,7 @@ import { normalizeEmail } from '../domain/email';
 import { STORES, getStore } from '../domain/stores';
 import { useUi } from '../state/uiStore';
 import { StoreOrderPanel } from './StoreOrder';
-import { GlassSurface } from './GlassSurface';
+import { GLASS_BUTTON, GlassSurface } from './GlassSurface';
 import { useKeyboardInset } from './useKeyboardInset';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -255,7 +255,7 @@ export function SettingsSheet({ loadPeople, invite, onSignOut }: SheetProps) {
     >
       {/* The glass sits behind a transparent trigger, which keeps the sheet's a11y and open handling. */}
       <GlassSurface width={44} height={44} glass={<MenuIcon className="size-5" />}>
-        <SheetTrigger aria-label="Meny" className="absolute inset-0 z-10 rounded-full" />
+        <SheetTrigger aria-label="Meny" className={`absolute inset-0 z-10 ${GLASS_BUTTON}`} />
       </GlassSurface>
       <SheetContent
         side="bottom"

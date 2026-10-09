@@ -12,7 +12,7 @@ import {
 import { byManual } from '../domain/sort';
 import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
-import { GlassSurface } from './GlassSurface';
+import { GLASS_BUTTON, GlassSurface } from './GlassSurface';
 import { QuickAddBar } from './QuickAddBar';
 import { SyncIndicator } from './SyncIndicator';
 import { useKeyboard } from './useKeyboardInset';
@@ -89,7 +89,7 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
                     key={label}
                     type="button"
                     aria-label={label}
-                    className="grid flex-1 place-items-center rounded-full text-ink"
+                    className={`grid flex-1 place-items-center text-ink ${GLASS_BUTTON}`}
                   >
                     <Icon className="size-5" />
                   </button>

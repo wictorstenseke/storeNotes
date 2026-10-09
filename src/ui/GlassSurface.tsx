@@ -37,6 +37,11 @@ function endCaps(radius: number): CSSProperties {
   };
 }
 
+// For the buttons laid over the glass: a soft fill on hover, a stronger one while pressed, and the icon
+// dips a little.
+export const GLASS_BUTTON =
+  'rounded-full transition-colors duration-150 hover:bg-ink/5 active:bg-ink/10 [&>svg]:transition-transform [&>svg]:duration-150 active:[&>svg]:scale-90';
+
 export function GlassSurface({
   width,
   height,
@@ -49,7 +54,7 @@ export function GlassSurface({
   return (
     <div
       ref={area}
-      className={`relative [&>span[style*='mix-blend-mode']]:hidden ${className}`}
+      className={`relative transition-transform duration-200 ease-out has-[button:active]:scale-[0.96] [&>span[style*='mix-blend-mode']]:hidden ${className}`}
       style={{ width, height }}
     >
       <LiquidGlass
