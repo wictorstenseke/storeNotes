@@ -30,7 +30,7 @@ import { isDarkMode, setDarkMode } from '../theme';
 // closes, the sheet moves and the tap is lost.
 const keepFocus = (event: { preventDefault(): void }) => event.preventDefault();
 
-export type Person = { email: string; pending: boolean };
+export type Person = { email: string; pending: boolean; you?: boolean };
 
 type PanelProps = {
   loadPeople(): Promise<Person[]>;
@@ -180,6 +180,7 @@ export function SettingsPanel({
             {people.map((person) => (
               <span key={person.email} className="flex gap-1 text-[13px] text-ink-2">
                 <span className="min-w-0 truncate">{person.email}</span>
+                {person.you && <span className="shrink-0">(du)</span>}
                 {person.pending && <span className="shrink-0">· Inbjuden</span>}
               </span>
             ))}

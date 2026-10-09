@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Category } from '../domain/categories';
+import { youFirst } from '../domain/people';
 import { sectionStoreId } from '../domain/sectionStore';
 import { readSetting, writeSetting } from '../state/deviceSettings';
 import { createNoteStore, type NoteStore } from '../state/noteStore';
@@ -122,8 +123,12 @@ export async function startRuntime(sb: SupabaseClient): Promise<Runtime> {
       await sb.auth.signOut({ scope: 'local' });
     },
     loadPeople: async () => {
-      const { data } = await sb.rpc('list_people', { l: id });
-      return (data ?? []) as Person[];
+      // The session is read from this device, so it costs no request.
+      const [{ data }, auth] = await Promise.all([
+        sb.rpc('list_people', { l: id }),
+        sb.auth.getSession().catch(() => null),
+      ]);
+      return youFirst((data ?? []) as Person[], auth?.data.session?.user.email);
     },
     invite: async (email) => {
       const { error } = await sb

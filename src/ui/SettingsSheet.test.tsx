@@ -55,6 +55,23 @@ describe('SettingsPanel', () => {
     expect(screen.queryByText('Har tillgång')).toBeNull();
   });
 
+  it('marks the account that is signed in', () => {
+    render(
+      <SettingsPanel
+        loadPeople={() => new Promise(() => {})}
+        initialPeople={[
+          { email: 'me@example.com', pending: false, you: true },
+          { email: 'anna@example.com', pending: false },
+        ]}
+        onInvite={vi.fn()}
+        onSignOut={vi.fn()}
+        onEditOrder={vi.fn()}
+      />,
+    );
+    expect(screen.getAllByText('(du)')).toHaveLength(1);
+    expect(screen.getByText('me@example.com').parentElement).toHaveTextContent('me@example.com(du)');
+  });
+
   it('switches the add-item bar on and off, per device', async () => {
     useUi.setState({ showQuickAdd: true });
     const { user } = setup();
