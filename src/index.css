@@ -181,6 +181,16 @@
     overflow: hidden;
   }
 
+  /* Tailwind's reset gives buttons the default arrow; anything you can press should show a hand on desktop. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='switch']:not([aria-disabled='true']),
+  [role='menuitem'],
+  [role='menuitemradio'],
+  [role='menuitemcheckbox'] {
+    cursor: pointer;
+  }
+
   textarea,
   input,
   button {
