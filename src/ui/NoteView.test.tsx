@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Category } from '../domain/categories';
 import { sortOpen } from '../domain/sort';
 import { STORES } from '../domain/stores';
@@ -476,5 +476,35 @@ describe('editing the store order', () => {
     await chooseStore(user, STORES[1].name);
     const dialog = await openEditor(user);
     expect(within(dialog).getByRole('button', { name: STORES[1].name })).toHaveAttribute('aria-pressed', 'true');
+  });
+});
+
+describe('quick-add toggle', () => {
+  it('shows the plus when the bar is hidden and the bar after pressing it', async () => {
+    const { user } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Stäng' }));
+    expect(useUi.getState().showQuickAdd).toBe(false);
+    expect(screen.queryByRole('textbox', { name: 'Lägg till vara' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Lägg till varor' }));
+    expect(useUi.getState().showQuickAdd).toBe(true);
+    expect(screen.getByRole('textbox', { name: 'Lägg till vara' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Lägg till varor' })).toBeNull();
+  });
+});
+
+describe('list controls', () => {
+  it('adds a list from the top button', async () => {
+    const { store, user } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Ny lista' }));
+    expect(store.getState().sections).toHaveLength(2);
+  });
+
+  it('shares the open items through the share sheet', async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'share', { value: share, configurable: true });
+    const { user } = await setup(seedAC);
+    await user.click(screen.getByRole('button', { name: 'Dela' }));
+    expect(share).toHaveBeenCalledWith({ text: 'Grocery List\n- A\n- C' });
+    Reflect.deleteProperty(navigator, 'share');
   });
 });

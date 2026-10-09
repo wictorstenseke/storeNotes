@@ -1,20 +1,20 @@
-import { CheckIcon } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { parseQuickAdd } from '../domain/parseQuickAdd';
-import { byManual } from '../domain/sort';
-import { useNote, useNoteStore } from '../state/context';
-import { useUi } from '../state/uiStore';
+import { CheckIcon, XIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { parseQuickAdd } from "../domain/parseQuickAdd";
+import { byManual } from "../domain/sort";
+import { useNote, useNoteStore } from "../state/context";
+import { useUi } from "../state/uiStore";
 
 // iOS scrolls the page to reveal a field that the keyboard is about to cover, and
 // this field sits at the bottom, so the whole list would scroll away. Focusing it
 // while it is moved out of the way means there is nothing to reveal.
 function focusWithoutScroll(el: HTMLTextAreaElement) {
   if (document.activeElement === el) return;
-  el.style.transform = 'translateY(-9999px)';
+  el.style.transform = "translateY(-9999px)";
   el.focus({ preventScroll: true });
   requestAnimationFrame(() => {
-    el.style.transform = '';
+    el.style.transform = "";
   });
 }
 
@@ -23,7 +23,7 @@ export function QuickAddBar({ keyboardOpen }: { keyboardOpen: boolean }) {
   const sections = useNote((s) => s.sections);
   const chosen = useUi((s) => s.quickAddSectionId);
   const field = useRef<HTMLTextAreaElement>(null);
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
   // How many items the last submit added; shown briefly on the button as confirmation.
   const [added, setAdded] = useState(0);
   const clearAdded = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -32,14 +32,14 @@ export function QuickAddBar({ keyboardOpen }: { keyboardOpen: boolean }) {
   const sorted = useMemo(() => [...sections].sort(byManual), [sections]);
   const target = sorted.find((s) => s.id === chosen) ?? sorted[0];
   if (!target) return null;
-  const name = target.title || 'Namnlös';
+  const name = target.title || "Namnlös";
 
   const submit = () => {
     const parts = parseQuickAdd(text);
     if (parts.length === 0) return;
     note.addItems(target.id, parts);
     useUi.getState().setQuickAddSectionId(target.id);
-    setText('');
+    setText("");
     field.current?.focus();
     setAdded(parts.length);
     clearTimeout(clearAdded.current);
@@ -52,14 +52,18 @@ export function QuickAddBar({ keyboardOpen }: { keyboardOpen: boolean }) {
   };
 
   // Tapping a button must not take focus from the field, or the keyboard closes.
-  const keepFocus = { onMouseDown: (e: { preventDefault(): void }) => e.preventDefault() };
+  const keepFocus = {
+    onMouseDown: (e: { preventDefault(): void }) => e.preventDefault(),
+  };
 
   const canAdd = parseQuickAdd(text).length > 0;
 
   return (
     <div
       className="relative z-10 shrink-0 border-t border-line bg-page shadow-[0_-4px_16px_rgba(0,0,0,0.12)]"
-      style={{ paddingBottom: keyboardOpen ? 0 : 'env(safe-area-inset-bottom)' }}
+      style={{
+        paddingBottom: keyboardOpen ? 0 : "env(safe-area-inset-bottom)",
+      }}
     >
       <form
         className="mx-auto flex max-w-xl flex-col gap-1 px-5 pb-2 pt-3"
@@ -100,27 +104,39 @@ export function QuickAddBar({ keyboardOpen }: { keyboardOpen: boolean }) {
               className="min-w-0 flex-1 resize-none bg-transparent text-[16px] leading-[22px] caret-notes-ink outline-none placeholder:text-ink-2"
               onChange={(event) => setText(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+                if (event.key !== "Enter" || event.nativeEvent.isComposing)
+                  return;
                 event.preventDefault();
                 submit();
               }}
             />
           </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="lg"
+            aria-label="Stäng"
+            className="shrink-0 px-2.5 text-ink-2"
+            onClick={() => useUi.getState().setShowQuickAdd(false)}
+            {...keepFocus}
+          >
+            <XIcon className="size-5" />
+          </Button>
           {/* Not `disabled`: a disabled button would take the tap and close the keyboard. */}
           <Button
             type="submit"
             size="lg"
             aria-disabled={!canAdd}
-            className={`min-w-24 shrink-0 ${canAdd || added > 0 ? '' : 'opacity-40'}`}
+            className={`min-w-24 shrink-0 ${canAdd || added > 0 ? "" : "opacity-40"}`}
             {...keepFocus}
           >
             {added > 0 ? (
               <>
                 <CheckIcon data-icon="inline-start" strokeWidth={3} />
-                {added > 1 ? `${added} tillagda` : 'Tillagd'}
+                {added > 1 ? `${added} tillagda` : "Tillagd"}
               </>
             ) : (
-              'Lägg till'
+              "Lägg till"
             )}
           </Button>
         </div>

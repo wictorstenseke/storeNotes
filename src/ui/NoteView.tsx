@@ -1,6 +1,6 @@
-import { EllipsisIcon, PlusIcon, ShareIcon, ShoppingBasketIcon, UsersIcon } from 'lucide-react';
-import { useMemo, type ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
+import { PlusIcon, ShoppingBasketIcon } from "lucide-react";
+import { useMemo, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -8,17 +8,24 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/ui/empty';
-import { byManual } from '../domain/sort';
-import { useNote, useNoteStore } from '../state/context';
-import { useUi } from '../state/uiStore';
-import { GLASS_BUTTON, GlassSurface } from './GlassSurface';
-import { QuickAddBar } from './QuickAddBar';
-import { SyncIndicator } from './SyncIndicator';
-import { useKeyboard } from './useKeyboardInset';
-import { SectionView } from './SectionView';
+} from "@/components/ui/empty";
+import { byManual } from "../domain/sort";
+import { useNote, useNoteStore } from "../state/context";
+import { useUi } from "../state/uiStore";
+import { GLASS_BUTTON, GlassSurface } from "./GlassSurface";
+import { ListControls } from "./ListControls";
+import { QuickAddBar } from "./QuickAddBar";
+import { SyncIndicator } from "./SyncIndicator";
+import { useKeyboard } from "./useKeyboardInset";
+import { SectionView } from "./SectionView";
 
-export function NoteView({ header, banner }: { header?: ReactNode; banner?: ReactNode }) {
+export function NoteView({
+  header,
+  banner,
+}: {
+  header?: ReactNode;
+  banner?: ReactNode;
+}) {
   const store = useNoteStore();
   const keyboard = useKeyboard();
   const showQuickAdd = useUi((s) => s.showQuickAdd);
@@ -38,13 +45,24 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
   return (
     <div
       className="fixed inset-x-0 flex flex-col"
-      style={keyboardOpen ? { top: keyboard.top, height: keyboard.height } : { top: 0, bottom: 0 }}
+      style={
+        keyboardOpen
+          ? { top: keyboard.top, height: keyboard.height }
+          : { top: 0, bottom: 0 }
+      }
     >
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex min-h-full max-w-xl flex-col pb-6 pt-[env(safe-area-inset-top)]">
           {/* Zero height, so the button hangs out of it and stays in view while the list scrolls. */}
           <div className="pointer-events-none sticky top-[calc(env(safe-area-inset-top)+1.25rem)] z-20 mt-5 h-0 px-5">
-            <div className="pointer-events-auto ml-auto w-fit">{header}</div>
+            <div className="flex items-start justify-between">
+              {sorted.length > 0 ? (
+                <ListControls onNewList={addSection} />
+              ) : (
+                <span />
+              )}
+              <div className="pointer-events-auto w-fit">{header}</div>
+            </div>
           </div>
           <div className="flex h-11 items-center px-5">
             <SyncIndicator />
@@ -57,7 +75,9 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
                   <ShoppingBasketIcon />
                 </EmptyMedia>
                 <EmptyTitle>Inga listor än</EmptyTitle>
-                <EmptyDescription>Skapa din första lista för att börja lägga till varor.</EmptyDescription>
+                <EmptyDescription>
+                  Skapa din första lista för att börja lägga till varor.
+                </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
                 <Button size="lg" onClick={addSection}>
@@ -71,32 +91,33 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
               {sorted.map((section) => (
                 <SectionView key={section.id} section={section} />
               ))}
-              <Button variant="outline" className="mx-5 mb-10 mt-9 self-start" onClick={addSection}>
+              <Button
+                variant="outline"
+                className="mx-5 mb-10 mt-9 self-start"
+                onClick={addSection}
+              >
                 + Ny lista
               </Button>
             </>
           )}
-          {/* Example glass group. Zero height like the menu button, so it hangs up from the bottom edge and stays in view. */}
-          <div className="pointer-events-none sticky bottom-5 z-20 mt-auto h-0 px-5">
-            <GlassSurface width={156} height={44} className="pointer-events-auto -translate-y-full">
-              <div className="absolute inset-0 z-10 flex">
-                {[
-                  { label: 'Dela med', Icon: UsersIcon },
-                  { label: 'Exportera', Icon: ShareIcon },
-                  { label: 'Mer', Icon: EllipsisIcon },
-                ].map(({ label, Icon }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    aria-label={label}
-                    className={`grid flex-1 place-items-center text-ink ${GLASS_BUTTON}`}
-                  >
-                    <Icon className="size-5" />
-                  </button>
-                ))}
-              </div>
-            </GlassSurface>
-          </div>
+          {/* Zero height like the top controls: the plus hangs up from the bottom-right corner. */}
+          {!showQuickAdd && (
+            <div className="pointer-events-none sticky bottom-5 z-20 mt-auto flex h-0 justify-end px-5">
+              <GlassSurface
+                width={52}
+                height={52}
+                className="pointer-events-auto -translate-y-full"
+                glass={<PlusIcon className="size-6" />}
+              >
+                <button
+                  type="button"
+                  aria-label="Lägg till varor"
+                  className={`absolute inset-0 z-10 ${GLASS_BUTTON}`}
+                  onClick={() => useUi.getState().setShowQuickAdd(true)}
+                />
+              </GlassSurface>
+            </div>
+          )}
         </div>
       </main>
       {showQuickAdd && <QuickAddBar keyboardOpen={keyboardOpen} />}
