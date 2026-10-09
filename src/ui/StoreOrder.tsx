@@ -1,6 +1,6 @@
 import { GripVerticalIcon } from 'lucide-react';
 import { useLayoutEffect, useMemo, useRef } from 'react';
-import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent, type Modifier } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Category } from '../domain/categories';
@@ -51,6 +51,9 @@ function OrderRow({ category, index, onMove }: RowProps) {
   );
 }
 
+// Rows only move up and down, so a drag can't push the area sideways.
+const verticalOnly: Modifier = ({ transform }) => ({ ...transform, x: 0 });
+
 type ListProps = { order: Category[]; onChange(order: Category[]): void };
 
 export function StoreOrderList({ order, onChange }: ListProps) {
@@ -79,7 +82,7 @@ export function StoreOrderList({ order, onChange }: ListProps) {
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[verticalOnly]} onDragEnd={onDragEnd}>
       <SortableContext items={order} strategy={verticalListSortingStrategy}>
         <ol ref={list}>
           {order.map((category, index) => (
@@ -136,7 +139,7 @@ export function StoreOrderPanel({ storeId, onStore }: PanelProps) {
           </button>
         ))}
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
         <StoreOrderList order={order} onChange={(next) => note.setStoreOrder(store.id, next)} />
       </div>
       <Button
