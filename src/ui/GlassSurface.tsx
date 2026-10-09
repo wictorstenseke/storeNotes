@@ -14,8 +14,10 @@ type Props = {
 
 // Apple Notes look: no refraction or colour fringing, a milky frosted fill and a soft shadow.
 // The library hardcodes a heavy shadow and a white text shadow, overridden through its class names.
+// `flex!`: the library's inline-flex leaves a baseline gap, so its box is 6px taller than the glass and
+// the centring shifts the glass up, off our rim.
 const GLASS =
-  "[&_.glass]:shadow-[0_2px_12px_rgba(0,0,0,0.1)]! [&_.glass>div]:[text-shadow:none] [&_.glass__warp]:bg-page/55";
+  "[&_.glass]:flex! [&_.glass]:shadow-[0_2px_12px_rgba(0,0,0,0.1)]! [&_.glass>div]:[text-shadow:none] [&_.glass__warp]:bg-page/55";
 
 // The glowing rim: one hairline edge plus a highlight along the top. On a light page a white ring inside
 // the hairline reads as a second border, so only dark mode gets a full inner stroke.
