@@ -1,4 +1,4 @@
-import { PlusIcon, ShoppingBasketIcon } from 'lucide-react';
+import { EllipsisIcon, PlusIcon, ShareIcon, ShoppingBasketIcon, UsersIcon } from 'lucide-react';
 import { useMemo, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,6 +12,7 @@ import {
 import { byManual } from '../domain/sort';
 import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
+import { GlassSurface } from './GlassSurface';
 import { QuickAddBar } from './QuickAddBar';
 import { SyncIndicator } from './SyncIndicator';
 import { useKeyboard } from './useKeyboardInset';
@@ -75,6 +76,27 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
               </Button>
             </>
           )}
+          {/* Example glass group. Zero height like the menu button, so it hangs up from the bottom edge and stays in view. */}
+          <div className="pointer-events-none sticky bottom-5 z-20 mt-auto h-0 px-5">
+            <GlassSurface width={156} height={44} className="pointer-events-auto -translate-y-full">
+              <div className="absolute inset-0 z-10 flex">
+                {[
+                  { label: 'Dela med', Icon: UsersIcon },
+                  { label: 'Exportera', Icon: ShareIcon },
+                  { label: 'Mer', Icon: EllipsisIcon },
+                ].map(({ label, Icon }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    aria-label={label}
+                    className="grid flex-1 place-items-center rounded-full text-ink"
+                  >
+                    <Icon className="size-5" />
+                  </button>
+                ))}
+              </div>
+            </GlassSurface>
+          </div>
         </div>
       </main>
       {showQuickAdd && <QuickAddBar keyboardOpen={keyboardOpen} />}

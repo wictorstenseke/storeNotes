@@ -20,8 +20,8 @@ import { normalizeEmail } from '../domain/email';
 import { STORES, getStore } from '../domain/stores';
 import { useUi } from '../state/uiStore';
 import { StoreOrderPanel } from './StoreOrder';
+import { GlassSurface } from './GlassSurface';
 import { useKeyboardInset } from './useKeyboardInset';
-import LiquidGlass from 'liquid-glass-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { isDarkMode, setDarkMode } from '../theme';
@@ -237,7 +237,6 @@ export function SettingsSheet({ loadPeople, invite, onSignOut }: SheetProps) {
   const [view, setView] = useState<View>('settings');
   const [orderStore, setOrderStore] = useState(STORES[0].id);
   const keyboardInset = useKeyboardInset();
-  const glassArea = useRef<HTMLDivElement>(null);
   // Loaded before the sheet opens: people appearing mid-slide made it jump.
   const [people, setPeople] = useState<Person[]>([]);
   const refresh = useCallback(async () => setPeople(await loadPeople()), [loadPeople]);
@@ -254,36 +253,10 @@ export function SettingsSheet({ loadPeople, invite, onSignOut }: SheetProps) {
         setOpen(next);
       }}
     >
-      {/* Liquid glass sits behind a transparent trigger, which keeps the sheet's a11y and open handling. */}
-      <div ref={glassArea} className="relative size-11">
-        {/* Apple Notes look: no refraction or colour fringing, a milky frosted fill and a soft shadow.
-            The library hardcodes a heavy shadow and white text shadow, overridden through its class names. */}
-        <LiquidGlass
-          mouseContainer={glassArea}
-          cornerRadius={22}
-          padding="0"
-          blurAmount={0.45}
-          saturation={120}
-          displacementScale={8}
-          aberrationIntensity={0}
-          elasticity={0.2}
-          className="[&_.glass]:shadow-[0_2px_12px_rgba(0,0,0,0.1)]! [&_.glass>div]:[text-shadow:none] [&_.glass__warp]:bg-page/55"
-          style={{ position: 'absolute', top: '50%', left: '50%' }}
-        >
-          <div className="grid size-11 place-items-center text-ink">
-            <MenuIcon className="size-5" />
-          </div>
-        </LiquidGlass>
-        {/* The glowing rim: a bright inner edge, brightest along the top, plus a faint outer hairline. */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-full shadow-[0_0_0_0.5px_rgba(0,0,0,0.1),inset_0_0_0_1px_rgba(255,255,255,0.9),inset_0_1.5px_2px_rgba(255,255,255,1),inset_0_-1px_2px_rgba(255,255,255,0.6)] dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.22),inset_0_1.5px_2px_rgba(255,255,255,0.45),inset_0_-1px_2px_rgba(255,255,255,0.15)]"
-        />
-        <SheetTrigger
-          aria-label="Meny"
-          className="absolute inset-0 z-10 rounded-full"
-        />
-      </div>
+      {/* The glass sits behind a transparent trigger, which keeps the sheet's a11y and open handling. */}
+      <GlassSurface width={44} height={44} glass={<MenuIcon className="size-5" />}>
+        <SheetTrigger aria-label="Meny" className="absolute inset-0 z-10 rounded-full" />
+      </GlassSurface>
       <SheetContent
         side="bottom"
         className={`gap-0 rounded-t-lg data-[side=bottom]:mx-auto data-[side=bottom]:max-w-xl ${
