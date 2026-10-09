@@ -28,11 +28,12 @@ export function GlassSurface({
   className = "",
   children,
 }: Props) {
+  // The library draws its own rim (the blended spans beside the glass), which would double ours.
   const area = useRef<HTMLDivElement>(null);
   return (
     <div
       ref={area}
-      className={`relative ${className}`}
+      className={`relative [&>span[style*='mix-blend-mode']]:hidden ${className}`}
       style={{ width, height }}
     >
       <LiquidGlass
