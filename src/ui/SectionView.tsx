@@ -352,13 +352,14 @@ export function SectionView({ section }: { section: Section }) {
         opacity: isDragging ? 0.6 : 1,
       }}
     >
-      <div className="relative flex items-center gap-2 px-5">
-        {/* Only a folded list needs a hint that it can be opened; it hangs in the margin, centred on the title's first line, so the title stays aligned with the open lists. */}
+      <div className="flex items-center gap-2 px-5">
+        {/* Only a folded list needs a hint that it can be opened. Its arrow lines up with the titles of
+            open lists (the icon has blank space on its left, hence the pull) and pushes the title in. */}
         {collapsed && (
           <ChevronRightIcon
             aria-hidden
             strokeWidth={2.5}
-            className="absolute left-0 top-1 size-5 text-ink"
+            className="-ml-1.5 -mr-1 mt-1 size-5 shrink-0 self-start text-ink"
           />
         )}
         <SectionTitle
