@@ -22,9 +22,9 @@ const GLASS =
 // The rim, like iOS: a hairline that is faint along the top and bottom and darkest on the rounded ends,
 // plus a little inner shading. Dark mode keeps a plain light stroke instead.
 const RIM =
-  "shadow-[0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.22),inset_0_1.5px_2px_rgba(255,255,255,0.45),inset_0_-1px_2px_rgba(255,255,255,0.15)]";
+  "shadow-[0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.22),inset_0_1.5px_2px_rgba(255,255,255,0.45),inset_0_-1px_2px_rgba(255,255,255,0.15)]";
 
-// A 1px ring masked out of a horizontal gradient, so it only shows on the end caps (one radius wide).
+// A 1px ring just outside the glass (-inset-px), so the glass keeps its full size. Masked out of a horizontal gradient, so it only shows on the end caps (one radius wide).
 function endCaps(radius: number): CSSProperties {
   const dark = "rgba(0,0,0,0.22)";
   return {
@@ -77,7 +77,7 @@ export function GlassSurface({
       />
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-full dark:hidden"
+        className="pointer-events-none absolute -inset-px rounded-full dark:hidden"
         style={endCaps(height / 2)}
       />
       {children}
