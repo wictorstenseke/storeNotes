@@ -379,7 +379,7 @@ export function SectionView({ section }: { section: Section }) {
           <button
             type="button"
             aria-label={`${activeStore ? activeStore.name : 'Ingen butik vald'}. Tryck för att byta butik`}
-            className="shrink-0 text-[13px] text-notes-ink active:opacity-60"
+            className="shrink-0 cursor-pointer text-[13px] text-notes-ink transition-opacity hover:opacity-70 active:opacity-50"
             onClick={() => {
               // The store is per device, whether to sort by it is per list.
               const at = activeStore ? STORES.findIndex((s) => s.id === activeStore.id) : -1;

@@ -113,7 +113,7 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
               </DndContext>
               <button
                 type="button"
-                className="mx-5 mb-10 mt-9 flex items-center gap-2 self-start text-[15px] text-notes-ink transition-opacity active:opacity-60"
+                className="mx-5 mb-10 mt-9 flex items-center gap-2 self-start cursor-pointer text-[15px] text-notes-ink transition-opacity hover:opacity-70 active:opacity-50"
                 onClick={addSection}
               >
                 <ListPlusIcon className="size-5" />
