@@ -1,5 +1,5 @@
 import { EllipsisIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +28,7 @@ type Props = {
   storeId: string | null;
   hideHint: boolean;
   onToggleHint(): void;
+  onRename(): void;
   onStore(id: string | null): void;
   onDelete(): void;
 };
@@ -40,10 +41,13 @@ export function SectionMenu({
   storeId,
   hideHint,
   onToggleHint,
+  onRename,
   onStore,
   onDelete,
 }: Props) {
   const [confirming, setConfirming] = useState(false);
+  // Renaming moves focus to the title; the menu must not hand it back to its button when it closes.
+  const renaming = useRef(false);
   const chosen = storeSort ? (getStore(storeId)?.id ?? NO_STORE) : NO_STORE;
   return (
     <>
@@ -54,7 +58,15 @@ export function SectionMenu({
         >
           <EllipsisIcon className="size-5" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-48">
+        <DropdownMenuContent
+          align="end"
+          className="min-w-48"
+          finalFocus={() => {
+            if (!renaming.current) return;
+            renaming.current = false;
+            return false;
+          }}
+        >
           <DropdownMenuRadioGroup
             value={chosen}
             onValueChange={(value) => onStore(value === NO_STORE ? null : String(value))}
@@ -72,6 +84,14 @@ export function SectionMenu({
             Dölj fält
           </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              renaming.current = true;
+              onRename();
+            }}
+          >
+            Byt namn
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setConfirming(true)}>Ta bort lista</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -34,6 +34,7 @@ export type NoteActions = {
   resetStoreOrder(storeId: string): void;
   addSection(title?: string): string;
   renameSection(id: string, title: string): void;
+  moveSection(id: string, toIndex: number): void;
   setStoreSort(id: string, on: boolean): void;
   deleteSection(id: string): void;
 };
@@ -273,6 +274,14 @@ export function createNoteStore(deps: NoteDeps): NoteStore {
         const section = findSection(id);
         if (!section || section.title === title) return;
         patchSection(id, { title });
+      },
+
+      moveSection: (id, toIndex) => {
+        if (!findSection(id)) return;
+        const rest = [...get().sections].sort(byManual).filter((s) => s.id !== id);
+        const before = rest[toIndex - 1]?.position ?? null;
+        const after = rest[toIndex]?.position ?? null;
+        patchSection(id, { position: positionBetween(before, after) });
       },
 
       setStoreSort: (id, on) => {

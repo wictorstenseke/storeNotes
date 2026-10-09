@@ -1,6 +1,16 @@
 import { ListPlusIcon, PlusIcon, ShoppingBasketIcon } from 'lucide-react';
 import { useMemo, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
+import {
+  DndContext,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -26,6 +36,17 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
   const showQuickAdd = useUi((s) => s.showQuickAdd);
   const sections = useNote((s) => s.sections);
   const sorted = useMemo(() => [...sections].sort(byManual), [sections]);
+
+  // A list is moved by holding its title (touch) or dragging it (mouse).
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 300, tolerance: 6 } }),
+  );
+  const moveSection = (event: DragEndEvent) => {
+    const overId = event.over?.id;
+    const to = overId === undefined ? -1 : sorted.findIndex((s) => s.id === overId);
+    if (to >= 0 && overId !== event.active.id) store.getState().moveSection(String(event.active.id), to);
+  };
 
   const addSection = () => {
     const id = store.getState().addSection();
@@ -75,9 +96,21 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
             </Empty>
           ) : (
             <>
-              {sorted.map((section) => (
-                <SectionView key={section.id} section={section} />
-              ))}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={() => (document.activeElement as HTMLElement | null)?.blur()}
+                onDragEnd={moveSection}
+              >
+                <SortableContext
+                  items={sorted.map((s) => s.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {sorted.map((section) => (
+                    <SectionView key={section.id} section={section} />
+                  ))}
+                </SortableContext>
+              </DndContext>
               <button
                 type="button"
                 className="mx-5 mb-10 mt-9 flex items-center gap-2 self-start text-[15px] text-notes-ink transition-opacity active:opacity-60"

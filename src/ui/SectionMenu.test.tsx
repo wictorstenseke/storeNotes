@@ -11,6 +11,7 @@ function setup(storeSort = false, storeId: string | null = null, hideHint = fals
     storeId,
     hideHint,
     onToggleHint: vi.fn(),
+    onRename: vi.fn(),
     onStore: vi.fn(),
     onDelete: vi.fn(),
   };
@@ -81,5 +82,12 @@ describe('SectionMenu', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'Ta bort lista' }));
     await user.click(await screen.findByRole('button', { name: 'Avbryt' }));
     expect(props.onDelete).not.toHaveBeenCalled();
+  });
+
+  it('asks to rename the list', async () => {
+    const { props, user } = setup(false);
+    await openMenu(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Byt namn' }));
+    expect(props.onRename).toHaveBeenCalledOnce();
   });
 });

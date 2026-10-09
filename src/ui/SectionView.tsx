@@ -8,7 +8,15 @@ import {
   type MouseEvent,
   type ReactNode,
 } from 'react';
-import { DndContext, TouchSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import {
+  DndContext,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { ChevronRightIcon } from 'lucide-react';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
@@ -24,22 +32,37 @@ import { ItemLine } from './ItemLine';
 import { MOTION } from './motion';
 import { SectionMenu } from './SectionMenu';
 
+type DragListeners = ReturnType<typeof useSortable>['listeners'];
+
 type TitleProps = {
   title: string;
   wantFocus: boolean;
   onFocused(): void;
   onCommit(title: string): void;
   onEnter(): void;
+  onToggle(): void;
+  // Holding the title (or dragging it with a mouse) moves the whole list.
+  dragListeners: DragListeners;
 };
 
-function SectionTitle({ title, wantFocus, onFocused, onCommit, onEnter }: TitleProps) {
+// Tapping the title folds the list, so it is read-only until something asks to rename it
+// (a new list, or Byt namn in the menu). Only then is it a text field with a keyboard.
+function SectionTitle({
+  title,
+  wantFocus,
+  onFocused,
+  onCommit,
+  onEnter,
+  onToggle,
+  dragListeners,
+}: TitleProps) {
   const field = useRef<HTMLTextAreaElement>(null);
-  const editing = useRef(false);
+  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(title);
 
   useEffect(() => {
-    if (!editing.current) setDraft(title);
-  }, [title]);
+    if (!editing) setDraft(title);
+  }, [title, editing]);
 
   // Grow with the content so a long title wraps instead of scrolling sideways.
   useLayoutEffect(() => {
@@ -51,10 +74,15 @@ function SectionTitle({ title, wantFocus, onFocused, onCommit, onEnter }: TitleP
 
   useLayoutEffect(() => {
     if (!wantFocus) return;
-    field.current?.focus();
+    setEditing(true);
     onFocused();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wantFocus]);
+
+  // Focus once the field has stopped being read-only, or iOS shows no keyboard.
+  useLayoutEffect(() => {
+    if (editing) field.current?.focus();
+  }, [editing]);
 
   return (
     // iOS offers "Autofyll kontakt" on fields it reads as a name, so neither the
@@ -63,22 +91,40 @@ function SectionTitle({ title, wantFocus, onFocused, onCommit, onEnter }: TitleP
       ref={field}
       rows={1}
       value={draft}
+      {...(editing ? undefined : dragListeners)}
+      readOnly={!editing}
       aria-label="Listrubrik"
       placeholder="Lista"
       enterKeyHint="next"
       autoCapitalize="sentences"
       autoComplete="off"
-      className="mb-1 min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-[20px] font-semibold leading-7 caret-notes-ink outline-none placeholder:text-ink-2"
+      className={`mb-1 min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-[20px] font-semibold leading-7 caret-notes-ink outline-none placeholder:text-ink-2 ${
+        editing ? '' : 'cursor-pointer select-none [-webkit-touch-callout:none]'
+      }`}
       onChange={(event) => setDraft(event.target.value.replace(/\s*[\r\n]+\s*/g, ' '))}
-      onFocus={() => {
-        editing.current = true;
-      }}
       onBlur={() => {
-        editing.current = false;
+        if (!editing) return;
+        setEditing(false);
         onCommit(draft.trim());
       }}
+      onMouseDown={(event) => {
+        if (editing) return;
+        dragListeners?.onMouseDown?.(event);
+        event.preventDefault(); // no focus, no text selection
+      }}
+      onClick={() => {
+        if (!editing) onToggle();
+      }}
       onKeyDown={(event) => {
-        if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+        if (event.nativeEvent.isComposing) return;
+        if (!editing) {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onToggle();
+          }
+          return;
+        }
+        if (event.key !== 'Enter') return;
         event.preventDefault();
         onEnter();
       }}
@@ -131,6 +177,10 @@ export function SectionView({ section }: { section: Section }) {
   const storeId = useUi((s) => s.storeId);
   const selection = useUi((s) => s.selection);
   const hideHint = useUi((s) => s.hiddenStoreHints.includes(section.id));
+  const collapsed = useUi((s) => s.collapsedSections.includes(section.id));
+  const { setNodeRef, listeners, transform, transition, isDragging } = useSortable({
+    id: section.id,
+  });
 
   const mine = useMemo(() => items.filter((i) => i.section_id === section.id), [items, section.id]);
 
@@ -291,14 +341,33 @@ export function SectionView({ section }: { section: Section }) {
   });
 
   return (
-    <section className="mt-5" aria-label={section.title || 'Namnlös lista'}>
-      <div className="flex items-center gap-2 px-5">
+    <section
+      ref={setNodeRef}
+      className="mt-5"
+      aria-label={section.title || 'Namnlös lista'}
+      aria-expanded={!collapsed}
+      style={{
+        transform: CSS.Translate.toString(transform),
+        transition,
+        opacity: isDragging ? 0.6 : 1,
+      }}
+    >
+      <div className="relative flex items-center gap-2 px-5">
+        {/* Only a folded list needs a hint that it can be opened; it sits in the margin so the title does not move. */}
+        {collapsed && (
+          <ChevronRightIcon aria-hidden className="absolute left-0.5 top-[9px] size-4 text-ink-2" />
+        )}
         <SectionTitle
           title={section.title}
           wantFocus={focusId === section.id}
           onFocused={() => ui.requestFocus(null)}
           onCommit={(title) => note.renameSection(section.id, title)}
           onEnter={() => startLine(null, open.length)}
+          onToggle={() => {
+            if (useUi.getState().selection?.sectionId === section.id) ui.setSelection(null);
+            ui.toggleCollapsed(section.id);
+          }}
+          dragListeners={listeners}
         />
         {/* Names the store (or says none is chosen). Tap to step through none and each store; the menu has the same choice. */}
         {!hideHint && (
@@ -328,9 +397,12 @@ export function SectionView({ section }: { section: Section }) {
             if (id) ui.setStoreId(id);
             note.setStoreSort(section.id, id !== null);
           }}
+          onRename={() => ui.requestFocus(section.id)}
           onDelete={() => note.deleteSection(section.id)}
         />
       </div>
+      {!collapsed && (
+        <>
       <div
         ref={list}
         tabIndex={-1}
@@ -386,6 +458,8 @@ export function SectionView({ section }: { section: Section }) {
         onUncheck={note.uncheckItem}
         onClear={() => note.clearDone(section.id)}
       />
+        </>
+      )}
     </section>
   );
 }

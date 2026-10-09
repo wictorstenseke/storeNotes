@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Category } from '../domain/categories';
 import { effectiveOrder } from '../domain/learning';
-import { sortOpen } from '../domain/sort';
+import { byManual, sortOpen } from '../domain/sort';
 import type { StoreDef } from '../domain/stores';
 import { makeStore } from '../test/helpers';
 
@@ -87,6 +87,23 @@ describe('items', () => {
     expect(sortOpen(ctx.s().items, null).map((i) => i.text)).toEqual(['C', 'A', 'B']);
     ctx.s().moveItem(a, 2);
     expect(sortOpen(ctx.s().items, null).map((i) => i.text)).toEqual(['C', 'B', 'A']);
+  });
+
+  it('moves a section to a new index', async () => {
+    const ctx = await withSection();
+    const a = ctx.sectionId;
+    const b = ctx.s().addSection('B');
+    const c = ctx.s().addSection('C');
+    const order = () => [...ctx.s().sections].sort(byManual).map((s) => s.id);
+    expect(order()).toEqual([a, b, c]);
+    ctx.s().moveSection(c, 0);
+    expect(order()).toEqual([c, a, b]);
+    ctx.s().moveSection(c, 2);
+    expect(order()).toEqual([a, b, c]);
+    ctx.s().moveSection('nope', 0);
+    await ctx.s().idle();
+    // Saved, and an unknown id changes nothing.
+    expect((await queued(ctx)).filter((q) => q.startsWith('sections:patch'))).toEqual([`sections:patch:${c}`]);
   });
 
   it('soft-deletes an item', async () => {

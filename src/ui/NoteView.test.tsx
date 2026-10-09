@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Category } from '../domain/categories';
-import { sortOpen } from '../domain/sort';
+import { byManual, sortOpen } from '../domain/sort';
 import { STORES } from '../domain/stores';
 import { NoteStoreProvider } from '../state/context';
 import type { NoteActions, NoteState } from '../state/noteStore';
@@ -20,6 +20,7 @@ beforeEach(() => {
     selection: null,
     hiddenStoreHints: [],
     showQuickAdd: true,
+    collapsedSections: [],
   });
 });
 
@@ -86,7 +87,7 @@ describe('editing', () => {
   it('removes an empty line when it loses focus', async () => {
     const { store, user } = await setup(seedAC);
     await user.type(fields()[0], '{Enter}');
-    await user.click(screen.getByRole('textbox', { name: 'Listrubrik' }));
+    await user.click(document.body);
     expect(lines()).toEqual(['A', 'C']);
     expect(store.getState().items).toHaveLength(2);
   });
@@ -526,5 +527,58 @@ describe('store label', () => {
     expect(label()).toHaveTextContent('Ingen butik vald');
     await user.click(label());
     expect(label()).toHaveTextContent(names[0]);
+  });
+});
+
+describe('collapsing a list', () => {
+  const title = () => screen.getByRole('textbox', { name: 'Listrubrik' });
+  const grocery = () => screen.getByRole('region', { name: 'Grocery List' });
+
+  it('folds to just the title when the title is tapped, and unfolds again', async () => {
+    const { user } = await setup(seedAC);
+    expect(lines()).toEqual(['A', 'C']);
+    // Nothing to unfold yet, so no chevron.
+    expect(grocery().querySelector('svg.lucide-chevron-right')).toBeNull();
+    await user.click(title());
+    expect(lines()).toEqual([]);
+    expect(grocery().querySelector('svg.lucide-chevron-right')).not.toBeNull();
+    expect(screen.queryByRole('button', { name: /Ingen butik vald/ })).not.toBeNull();
+    await user.click(title());
+    expect(lines()).toEqual(['A', 'C']);
+    expect(grocery().querySelector('svg.lucide-chevron-right')).toBeNull();
+  });
+
+  it('remembers the fold per device', async () => {
+    const { sectionId, user } = await setup(seedAC);
+    await user.click(title());
+    expect(useUi.getState().collapsedSections).toEqual([sectionId]);
+    expect(localStorage.getItem('storenotes.collapsedSections')).toBe(JSON.stringify([sectionId]));
+  });
+
+  it('does not show a keyboard field for the title until renaming', async () => {
+    const { user } = await setup(seedAC);
+    expect(title()).toHaveAttribute('readonly');
+    await user.click(screen.getByRole('button', { name: 'Alternativ för Grocery List' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Byt namn' }));
+    await waitFor(() => expect(document.activeElement).toBe(title()));
+    expect(title()).not.toHaveAttribute('readonly');
+    await user.keyboard('{Backspace}');
+    await user.tab();
+    expect(title()).toHaveAttribute('readonly');
+    expect(screen.queryAllByRole('textbox', { name: 'Vara' }).length).toBe(2);
+  });
+});
+
+describe('moving a list', () => {
+  it('lists the sections in their saved order', async () => {
+    const { store, user } = await setup();
+    await user.click(screen.getAllByRole('button', { name: 'Ny lista' }).at(-1)!);
+    const [first, second] = [...store.getState().sections].sort(byManual);
+    act(() => store.getState().moveSection(second.id, 0));
+    const titles = screen
+      .getAllByRole('textbox', { name: 'Listrubrik' })
+      .map((el) => (el as HTMLTextAreaElement).value);
+    expect(titles).toEqual(['', 'Grocery List']);
+    expect(first.title).toBe('Grocery List');
   });
 });

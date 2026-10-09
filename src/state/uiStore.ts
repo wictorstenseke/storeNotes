@@ -24,12 +24,14 @@ type UiState = {
   showQuickAdd: boolean; // the add-item bar at the bottom, per device
   sheetRequest: 'invite' | null; // something outside the settings sheet asking it to open on a view
   hiddenStoreHints: string[]; // lists that hide the store text beside their menu, per device
+  collapsedSections: string[]; // lists folded to just their title, per device
   requestFocus(id: string | null): void;
   setHold(hold: Hold | null): void;
   setStoreId(id: string | null): void;
   setQuickAddSectionId(id: string | null): void;
   setSelection(selection: Selection | null): void;
   toggleStoreHint(sectionId: string): void;
+  toggleCollapsed(sectionId: string): void;
   setShowQuickAdd(show: boolean): void;
   requestSheet(view: 'invite' | null): void;
 };
@@ -43,6 +45,7 @@ export const useUi = create<UiState>()((set) => ({
   showQuickAdd: readSetting('showQuickAdd') !== 'false',
   sheetRequest: null,
   hiddenStoreHints: readIds('hiddenStoreHints'),
+  collapsedSections: readIds('collapsedSections'),
   requestFocus: (focusId) => set({ focusId }),
   setHold: (hold) => set({ hold }),
   setSelection: (selection) => set({ selection }),
@@ -51,6 +54,14 @@ export const useUi = create<UiState>()((set) => ({
     writeSetting('showQuickAdd', String(showQuickAdd));
     set({ showQuickAdd });
   },
+  toggleCollapsed: (sectionId) =>
+    set((state) => {
+      const collapsedSections = state.collapsedSections.includes(sectionId)
+        ? state.collapsedSections.filter((id) => id !== sectionId)
+        : [...state.collapsedSections, sectionId];
+      writeSetting('collapsedSections', JSON.stringify(collapsedSections));
+      return { collapsedSections };
+    }),
   toggleStoreHint: (sectionId) =>
     set((state) => {
       const hiddenStoreHints = state.hiddenStoreHints.includes(sectionId)
