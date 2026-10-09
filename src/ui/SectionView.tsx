@@ -353,9 +353,13 @@ export function SectionView({ section }: { section: Section }) {
       }}
     >
       <div className="relative flex items-center gap-2 px-5">
-        {/* Only a folded list needs a hint that it can be opened; it sits in the margin so the title does not move. */}
+        {/* Only a folded list needs a hint that it can be opened; it hangs in the margin, centred on the title's first line, so the title stays aligned with the open lists. */}
         {collapsed && (
-          <ChevronRightIcon aria-hidden className="absolute left-0.5 top-[9px] size-4 text-ink-2" />
+          <ChevronRightIcon
+            aria-hidden
+            strokeWidth={2.5}
+            className="absolute left-0 top-1 size-5 text-ink"
+          />
         )}
         <SectionTitle
           title={section.title}
