@@ -150,13 +150,19 @@ export function SettingsPanel({
   return (
     <div className="flex flex-col gap-5 px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
       <Group title="Delning">
-        {people.map((person) => (
-          <div key={person.email} className={ROW}>
-            <span className="min-w-0 truncate">{person.email}</span>
-            <span className="shrink-0 text-ink-2">{person.pending ? 'Inbjuden' : 'Har tillgång'}</span>
-          </div>
-        ))}
-        <NavRow onClick={onInvite}>Bjud in</NavRow>
+        {/* One row: the people have no action of their own, so they are its description. */}
+        <button type="button" className={`${ROW} py-2 active:bg-field`} onClick={onInvite}>
+          <span className="flex min-w-0 flex-col">
+            <span>Bjud in</span>
+            {people.map((person) => (
+              <span key={person.email} className="flex gap-1 text-[13px] text-ink-2">
+                <span className="min-w-0 truncate">{person.email}</span>
+                {person.pending && <span className="shrink-0">· Inbjuden</span>}
+              </span>
+            ))}
+          </span>
+          <ChevronRightIcon className="size-5 shrink-0 text-ink-2" />
+        </button>
       </Group>
       <Group title="Visning">
         <div className={`${ROW} py-2`}>

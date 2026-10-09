@@ -48,8 +48,11 @@ describe('SettingsPanel', () => {
         onEditOrder={vi.fn()}
       />,
     );
-    expect(screen.getByText('Har tillgång')).toBeInTheDocument();
-    expect(screen.getByText('Inbjuden')).toBeInTheDocument();
+    expect(screen.getByText('anna@example.com')).toBeInTheDocument();
+    expect(screen.getByText('bo@example.com')).toBeInTheDocument();
+    // Only the pending one is marked; having access is the default.
+    expect(screen.getByText('· Inbjuden')).toBeInTheDocument();
+    expect(screen.queryByText('Har tillgång')).toBeNull();
   });
 
   it('switches the add-item bar on and off, per device', async () => {
