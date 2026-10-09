@@ -1,5 +1,5 @@
 import LiquidGlass from "liquid-glass-react";
-import { useRef, type ReactNode } from "react";
+import { useRef, type CSSProperties, type ReactNode } from "react";
 
 type Props = {
   /** Pixels. The glass is measured once, so the size is fixed rather than following its content. */
@@ -19,10 +19,23 @@ type Props = {
 const GLASS =
   "[&_.glass]:flex! [&_.glass]:shadow-[0_2px_12px_rgba(0,0,0,0.1)]! [&_.glass>div]:[text-shadow:none] [&_.glass__warp]:bg-page/55";
 
-// The glowing rim: one hairline edge plus a highlight along the top and a slightly darker edge on the left and right, like iOS. On a light page a white ring inside
-// the hairline reads as a second border, so only dark mode gets a full inner stroke.
+// The rim, like iOS: a hairline that is faint along the top and bottom and darkest on the rounded ends,
+// plus a little inner shading. Dark mode keeps a plain light stroke instead.
 const RIM =
-  "shadow-[0_0_0_0.5px_rgba(0,0,0,0.12),inset_0_1.5px_1.5px_rgba(255,255,255,1),inset_1.5px_0_1.5px_-0.5px_rgba(0,0,0,0.1),inset_-1.5px_0_1.5px_-0.5px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.22),inset_0_1.5px_2px_rgba(255,255,255,0.45),inset_0_-1px_2px_rgba(255,255,255,0.15)]";
+  "shadow-[0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(255,255,255,0.22),inset_0_1.5px_2px_rgba(255,255,255,0.45),inset_0_-1px_2px_rgba(255,255,255,0.15)]";
+
+// A 1px ring masked out of a horizontal gradient, so it only shows on the end caps (one radius wide).
+function endCaps(radius: number): CSSProperties {
+  const dark = "rgba(0,0,0,0.22)";
+  return {
+    padding: 1,
+    background: `linear-gradient(90deg, ${dark}, transparent ${radius}px, transparent calc(100% - ${radius}px), ${dark})`,
+    WebkitMask:
+      "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+    WebkitMaskComposite: "xor",
+    maskComposite: "exclude",
+  };
+}
 
 export function GlassSurface({
   width,
@@ -61,6 +74,11 @@ export function GlassSurface({
       <span
         aria-hidden
         className={`pointer-events-none absolute inset-0 rounded-full ${RIM}`}
+      />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-full dark:hidden"
+        style={endCaps(height / 2)}
       />
       {children}
     </div>
