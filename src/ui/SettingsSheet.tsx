@@ -23,6 +23,7 @@ import { StoreOrderPanel } from './StoreOrder';
 import { useKeyboardInset } from './useKeyboardInset';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { isDarkMode, setDarkMode } from '../theme';
 
 // Pressing a control must not take focus from the email field, or the keyboard
 // closes, the sheet moves and the tap is lost.
@@ -46,7 +47,7 @@ const ROW = 'flex min-h-12 w-full items-center justify-between gap-3 px-4 text-l
 function Group({ title, children }: { title?: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-1.5">
-      {title && <h3 className="text-[13px] text-ink-2">{title}</h3>}
+      {title && <h3 className="mb-1 text-[13px] text-ink-2">{title}</h3>}
       <div className="flex flex-col divide-y divide-line/25 overflow-hidden rounded-lg bg-page">{children}</div>
     </section>
   );
@@ -139,6 +140,11 @@ export function SettingsPanel({
 
   const showQuickAdd = useUi((s) => s.showQuickAdd);
   const { setShowQuickAdd } = useUi.getState();
+  const [darkMode, setDarkModeState] = useState(isDarkMode);
+  const onDarkMode = (dark: boolean) => {
+    setDarkMode(dark);
+    setDarkModeState(dark);
+  };
 
   return (
     <div className="flex max-h-[70dvh] flex-col gap-5 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
@@ -165,6 +171,10 @@ export function SettingsPanel({
             checked={showQuickAdd}
             onCheckedChange={setShowQuickAdd}
           />
+        </div>
+        <div className={ROW}>
+          <span>Mörkt läge</span>
+          <Switch aria-label="Mörkt läge" checked={darkMode} onCheckedChange={onDarkMode} />
         </div>
       </Group>
       <Group title="Butik">
@@ -271,7 +281,7 @@ export function SettingsSheet({ loadPeople, invite, onSignOut }: SheetProps) {
                   <ChevronLeftIcon className="size-6" />
                 </button>
               )}
-              <SheetTitle className="text-[20px] font-semibold">{title}</SheetTitle>
+              <SheetTitle className="mb-1 text-[20px] font-semibold">{title}</SheetTitle>
             </div>
             <SheetDescription
               className={view === 'settings' ? 'sr-only' : 'text-[13px] text-ink-2'}

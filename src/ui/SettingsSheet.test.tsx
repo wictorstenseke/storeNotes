@@ -65,6 +65,18 @@ describe('SettingsPanel', () => {
     expect(useUi.getState().showQuickAdd).toBe(true);
   });
 
+  it('switches dark mode on and off, per device', async () => {
+    const { user } = setup();
+    const toggle = screen.getByRole('switch', { name: 'Mörkt läge' });
+    expect(toggle).not.toBeChecked();
+    await user.click(toggle);
+    expect(document.documentElement).toHaveClass('dark');
+    expect(localStorage.getItem('storenotes.darkMode')).toBe('true');
+    await user.click(toggle);
+    expect(document.documentElement).not.toHaveClass('dark');
+    expect(localStorage.getItem('storenotes.darkMode')).toBe('false');
+  });
+
   it('asks to invite', async () => {
     const { props, user } = setup();
     await user.click(screen.getByRole('button', { name: 'Bjud in' }));

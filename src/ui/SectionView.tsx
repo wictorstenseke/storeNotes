@@ -68,7 +68,7 @@ function SectionTitle({ title, wantFocus, onFocused, onCommit, onEnter }: TitleP
       enterKeyHint="next"
       autoCapitalize="sentences"
       autoComplete="off"
-      className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-[20px] font-semibold leading-7 caret-notes-ink outline-none placeholder:text-ink-2"
+      className="mb-1 min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-[20px] font-semibold leading-7 caret-notes-ink outline-none placeholder:text-ink-2"
       onChange={(event) => setDraft(event.target.value.replace(/\s*[\r\n]+\s*/g, ' '))}
       onFocus={() => {
         editing.current = true;

@@ -204,6 +204,7 @@ describe('store order', () => {
     await user.click(screen.getByRole('button', { name: 'Alternativ för Grocery List' }));
     await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Dölj fält' }));
     await waitFor(() => expect(within(grocery).queryByText('Ingen butik vald')).toBeNull());
+    await user.click(screen.getByRole('button', { name: 'Alternativ för Grocery List' }));
     await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Dölj fält' }));
     expect(await within(grocery).findByText('Ingen butik vald')).toBeInTheDocument();
   });

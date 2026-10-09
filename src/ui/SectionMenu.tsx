@@ -68,7 +68,7 @@ export function SectionMenu({
               </DropdownMenuRadioItem>
             ))}
           </DropdownMenuRadioGroup>
-          <DropdownMenuCheckboxItem checked={hideHint} onCheckedChange={onToggleHint}>
+          <DropdownMenuCheckboxItem checked={hideHint} onCheckedChange={onToggleHint} closeOnClick>
             Dölj fält
           </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />

@@ -88,7 +88,7 @@ export function SignIn({ auth }: { auth: AuthApi }) {
 
   return (
     <main className="mx-auto flex min-h-full max-w-sm flex-col gap-4 px-6 pt-24">
-      <h1 className="text-[20px] font-semibold">storeNotes</h1>
+      <h1 className="mb-1 text-[20px] font-semibold">storeNotes</h1>
       <form className="flex flex-col gap-4" onSubmit={submit} noValidate>
         <label className="flex flex-col gap-1 text-[13px] text-ink-2">
           E-post
