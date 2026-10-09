@@ -1,5 +1,5 @@
 import LiquidGlass from 'liquid-glass-react';
-import { useRef, type CSSProperties, type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 
 type Props = {
   /** Pixels. The glass is measured once, so the size is fixed rather than following its content. */
@@ -12,29 +12,17 @@ type Props = {
   children?: ReactNode;
 };
 
-// Apple Notes look: no refraction or colour fringing, a milky frosted fill and a soft shadow.
-// The library hardcodes a heavy shadow and a white text shadow, overridden through its class names.
+// Apple Notes toolbar look: a near-white frosted pill with no visible refraction or colour fringing,
+// a soft low shadow and an even hairline rim. The library hardcodes a heavy shadow and a white text
+// shadow, overridden through its class names.
 // `flex!`: the library's inline-flex leaves a baseline gap, so its box is 6px taller than the glass and
 // the centring shifts the glass up, off our rim.
 const GLASS =
-  '[&_.glass]:flex! [&_.glass]:shadow-[0_2px_12px_rgba(0,0,0,0.1)]! [&_.glass>div]:[text-shadow:none] [&_.glass__warp]:bg-page/55';
+  '[&_.glass]:flex! [&_.glass]:shadow-[0_1px_3px_rgba(0,0,0,0.05),0_4px_14px_rgba(0,0,0,0.07)]! [&_.glass>div]:[text-shadow:none] [&_.glass__warp]:bg-page/75 dark:[&_.glass__warp]:bg-white/10';
 
-// The rim, like iOS: a hairline that is faint along the top and bottom and darkest on the rounded ends,
-// plus a little inner shading. Dark mode keeps a plain light stroke instead.
+// The rim: the same hairline all the way round, with a lit top edge inside it.
 const RIM =
-  'shadow-[0_0_0_0.5px_rgba(0,0,0,0.06),inset_0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.22),inset_0_1.5px_2px_rgba(255,255,255,0.45),inset_0_-1px_2px_rgba(255,255,255,0.15)]';
-
-// A 1px ring just outside the glass (-inset-px), so the glass keeps its full size. Masked out of a horizontal gradient, so it only shows on the end caps (one radius wide).
-function endCaps(radius: number): CSSProperties {
-  const dark = 'rgba(0,0,0,0.22)';
-  return {
-    padding: 1,
-    background: `linear-gradient(90deg, ${dark}, transparent ${radius}px, transparent calc(100% - ${radius}px), ${dark})`,
-    WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
-    WebkitMaskComposite: 'xor',
-    maskComposite: 'exclude',
-  };
-}
+  'shadow-[0_0_0_0.5px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.2),inset_0_1px_0_rgba(255,255,255,0.14)]';
 
 // For the buttons laid over the glass: a soft fill on hover, a stronger one while pressed, and the icon
 // dips a little.
@@ -52,13 +40,10 @@ export function GlassSurface({ width, height, glass, className = '', children }:
     >
       <LiquidGlass
         mouseContainer={area}
-        cornerRadius={height / 2}
         padding="0"
-        blurAmount={0.45}
-        saturation={120}
+        blurAmount={0.4}
         displacementScale={8}
         aberrationIntensity={0}
-        elasticity={0.2}
         className={GLASS}
         style={{ position: 'absolute', top: '50%', left: '50%' }}
       >
@@ -67,11 +52,6 @@ export function GlassSurface({ width, height, glass, className = '', children }:
         </div>
       </LiquidGlass>
       <span aria-hidden className={`pointer-events-none absolute inset-0 rounded-full ${RIM}`} />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -inset-px rounded-full dark:hidden"
-        style={endCaps(height / 2)}
-      />
       {children}
     </div>
   );
