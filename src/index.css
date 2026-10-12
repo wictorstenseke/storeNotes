@@ -232,8 +232,10 @@
 
 /* A dragged line or list: a copy follows the finger (the ghost) while the real
    one stays in the order, emptied, and marks where it will land (the
-   placeholder). Both are drawn as a rounded, dashed box behind the content:
-   tinted for the ghost, empty for the placeholder. */
+   placeholder). Both are drawn as a rounded box behind the content, tinted
+   yellow: strongly for the ghost, barely and with a dashed edge for the
+   placeholder. The ghost pops up as it is picked and casts a shadow, so it
+   reads as lifted off the page. */
 [data-drag-ghost],
 [data-drag-placeholder] {
   position: relative;
@@ -243,6 +245,22 @@
   height: 100%;
   isolation: isolate;
   opacity: 0.7;
+  --drag-pop: 1.02;
+  animation: drag-pop 0.2s ease-out both;
+}
+
+/* The same growth would push something as large as a list past the screen edge. */
+[data-drag-ghost='list'] {
+  --drag-pop: 1.01;
+}
+
+@keyframes drag-pop {
+  60% {
+    scale: calc(var(--drag-pop) + 0.015);
+  }
+  100% {
+    scale: var(--drag-pop);
+  }
 }
 
 [data-drag-placeholder] > * {
@@ -254,22 +272,25 @@
   content: '';
   position: absolute;
   inset: 0 8px;
-  border-radius: 10px;
+  border-radius: 6px;
   pointer-events: none;
 }
 
-/* A list has no padding of its own, so its box reaches a little past it. */
+/* A list has no padding of its own, so its box reaches a little past it. It is
+   also much taller than a line, so it takes a rounder corner. */
 [data-drag-ghost='list']::before,
 [data-drag-placeholder='list']::before {
   inset: -8px 8px;
+  border-radius: 10px;
 }
 
 [data-drag-ghost]::before {
   z-index: -1;
   background: color-mix(in srgb, var(--notes) 18%, var(--page));
-  border: 1.5px dashed var(--notes-ink);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 16%);
 }
 
 [data-drag-placeholder]::before {
-  border: 1.5px dashed var(--line);
+  background: color-mix(in srgb, var(--notes) 8%, transparent);
+  border: 1.5px dashed var(--done);
 }
