@@ -16,6 +16,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core';
 import { ChevronRightIcon } from 'lucide-react';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -31,6 +32,7 @@ import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
 import { useSeen } from './useSeen';
 import { DoneGroup } from './DoneGroup';
+import { DragGhost, useDragGhost } from './DragGhost';
 import { ItemLine } from './ItemLine';
 import { MOTION } from './motion';
 import { SectionMenu } from './SectionMenu';
@@ -164,6 +166,7 @@ function Row({ id, draggable, selected, fresh, onMouseDown, onMouseEnter, childr
     <div
       ref={ref}
       data-draggable={draggable}
+      data-drag-placeholder={isDragging ? 'row' : undefined}
       data-selected={selected}
       data-fresh={fresh ? (seen ? 'seen' : 'new') : undefined}
       onAnimationEnd={(event) => {
@@ -171,11 +174,7 @@ function Row({ id, draggable, selected, fresh, onMouseDown, onMouseEnter, childr
         if (fresh && event.target === event.currentTarget) useUi.getState().clearFresh(id);
       }}
       className={selected ? 'bg-notes/20' : undefined}
-      style={{
-        transform: CSS.Translate.toString(transform),
-        transition,
-        opacity: isDragging ? 0.6 : 1,
-      }}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
       onMouseDown={onMouseDown}
       onMouseEnter={onMouseEnter}
       {...(draggable ? listeners : {})}
@@ -221,17 +220,24 @@ export function SectionView({ section }: { section: Section }) {
     useSensor(TouchSensor, { activationConstraint: { delay: 300, tolerance: 6 } }),
   );
 
+  const { ghost, lift, drop } = useDragGhost('[data-draggable]');
+
   // dnd-kit moves rows itself while dragging; pause auto-animate so the two
   // do not animate the same rows.
-  const onDragStart = () => {
-    (document.activeElement as HTMLElement | null)?.blur();
+  const onDragStart = (event: DragStartEvent) => {
+    lift(event);
     animateOpen(false);
   };
   const onDragEnd = (event: DragEndEvent) => {
+    drop();
     const overId = event.over?.id;
     const to = overId === undefined ? -1 : open.findIndex((i) => i.id === overId);
     if (to >= 0 && overId !== event.active.id) note.moveItem(String(event.active.id), to);
     requestAnimationFrame(() => animateOpen(true));
+  };
+  const onDragCancel = () => {
+    drop();
+    animateOpen(true);
   };
 
   // --- Selecting several lines (mouse and keyboard) ---------------------------
@@ -366,11 +372,8 @@ export function SectionView({ section }: { section: Section }) {
       className="mt-5"
       aria-label={section.title || 'Namnlös lista'}
       aria-expanded={!collapsed}
-      style={{
-        transform: CSS.Translate.toString(transform),
-        transition,
-        opacity: isDragging ? 0.6 : 1,
-      }}
+      data-drag-placeholder={isDragging ? 'list' : undefined}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
     >
       <div className="flex items-center gap-2 px-5">
         {/* Only a folded list needs a hint that it can be opened. Its arrow lines up with the titles of
@@ -440,7 +443,7 @@ export function SectionView({ section }: { section: Section }) {
           collisionDetection={closestCenter}
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
-          onDragCancel={() => animateOpen(true)}
+          onDragCancel={onDragCancel}
         >
           <SortableContext items={open.map((i) => i.id)} strategy={verticalListSortingStrategy}>
             <div ref={openList}>
@@ -463,6 +466,7 @@ export function SectionView({ section }: { section: Section }) {
               ))}
             </div>
           </SortableContext>
+          <DragGhost kind="row" ghost={ghost} />
         </DndContext>
       </div>
       {/* With nothing open there is no line to tap, so offer one. */}

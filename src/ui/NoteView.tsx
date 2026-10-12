@@ -23,6 +23,7 @@ import {
 import { byManual } from '../domain/sort';
 import { useNote, useNoteStore } from '../state/context';
 import { useUi } from '../state/uiStore';
+import { DragGhost, useDragGhost } from './DragGhost';
 import { GLASS_BUTTON, GlassSurface } from './GlassSurface';
 import { ListControls } from './ListControls';
 import { QuickAddBar, focusWithoutScroll } from './QuickAddBar';
@@ -42,7 +43,9 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 300, tolerance: 6 } }),
   );
+  const { ghost, lift, drop } = useDragGhost('section');
   const moveSection = (event: DragEndEvent) => {
+    drop();
     const overId = event.over?.id;
     const to = overId === undefined ? -1 : sorted.findIndex((s) => s.id === overId);
     if (to >= 0 && overId !== event.active.id) store.getState().moveSection(String(event.active.id), to);
@@ -99,8 +102,9 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
-                onDragStart={() => (document.activeElement as HTMLElement | null)?.blur()}
+                onDragStart={lift}
                 onDragEnd={moveSection}
+                onDragCancel={drop}
               >
                 <SortableContext
                   items={sorted.map((s) => s.id)}
@@ -110,6 +114,7 @@ export function NoteView({ header, banner }: { header?: ReactNode; banner?: Reac
                     <SectionView key={section.id} section={section} />
                   ))}
                 </SortableContext>
+                <DragGhost kind="list" ghost={ghost} />
               </DndContext>
               <button
                 type="button"

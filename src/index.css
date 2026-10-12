@@ -216,3 +216,60 @@
     background-color: --alpha(var(--notes) / 20%);
   }
 }
+
+/* Holding a line to move it is also how a phone starts selecting its text and
+   opens the long-press menu. Neither may happen once a drag has begun. */
+[data-draggable='true'] {
+  -webkit-touch-callout: none;
+}
+
+[data-dragging],
+[data-dragging] * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* A dragged line or list: a copy follows the finger (the ghost) while the real
+   one stays in the order, emptied, and marks where it will land (the
+   placeholder). Both are drawn as a rounded, dashed box behind the content:
+   tinted for the ghost, empty for the placeholder. */
+[data-drag-ghost],
+[data-drag-placeholder] {
+  position: relative;
+}
+
+[data-drag-ghost] {
+  height: 100%;
+  isolation: isolate;
+  opacity: 0.7;
+}
+
+[data-drag-placeholder] > * {
+  opacity: 0;
+}
+
+[data-drag-ghost]::before,
+[data-drag-placeholder]::before {
+  content: '';
+  position: absolute;
+  inset: 0 8px;
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+/* A list has no padding of its own, so its box reaches a little past it. */
+[data-drag-ghost='list']::before,
+[data-drag-placeholder='list']::before {
+  inset: -8px 8px;
+}
+
+[data-drag-ghost]::before {
+  z-index: -1;
+  background: color-mix(in srgb, var(--notes) 18%, var(--page));
+  border: 1.5px dashed var(--notes-ink);
+}
+
+[data-drag-placeholder]::before {
+  border: 1.5px dashed var(--line);
+}

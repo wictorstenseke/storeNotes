@@ -333,6 +333,66 @@ describe('reordering', () => {
     await chooseStore(user, STORES[0].name);
     expect(rows().every((row) => row.getAttribute('data-draggable') === 'false')).toBe(true);
   });
+
+  const ghost = () => document.querySelector('[data-drag-ghost]');
+  const ghostText = () =>
+    Array.from(ghost()?.querySelectorAll('textarea') ?? []).map((el) => el.value);
+
+  it('lifts a copy of a held line and marks the place it came from', async () => {
+    await setup(seedAC);
+    const [a, c] = rows();
+    fireEvent.touchStart(a, { touches: [{ clientX: 20, clientY: 20 }] });
+    await waitFor(() => expect(ghostText()).toEqual(['A']), { timeout: 2000 });
+    expect(a).toHaveAttribute('data-drag-placeholder');
+    expect(c).not.toHaveAttribute('data-drag-placeholder');
+    expect(document.documentElement).toHaveAttribute('data-dragging');
+
+    fireEvent.touchEnd(a);
+    await waitFor(() => expect(ghost()).toBeNull());
+    expect(a).not.toHaveAttribute('data-drag-placeholder');
+    expect(document.documentElement).not.toHaveAttribute('data-dragging');
+  });
+
+  it('lifts a copy of a whole list dragged by its title', async () => {
+    const { store } = await setup(seedAC);
+    act(() => void store.getState().addSection('Gifts'));
+    const title = screen.getAllByRole('textbox', { name: 'Listrubrik' })[0];
+    const list = title.closest('section')!;
+    fireEvent.mouseDown(title, { button: 0, clientX: 20, clientY: 20 });
+    fireEvent.mouseMove(document, { clientX: 20, clientY: 40 });
+    await waitFor(() => expect(ghostText()).toEqual(['Grocery List', 'A', 'C']));
+    expect(list).toHaveAttribute('data-drag-placeholder');
+    expect(document.documentElement).toHaveAttribute('data-dragging');
+
+    fireEvent.mouseUp(document);
+    await waitFor(() => expect(ghost()).toBeNull());
+    expect(list).not.toHaveAttribute('data-drag-placeholder');
+    expect(document.documentElement).not.toHaveAttribute('data-dragging');
+  });
+
+  // A line picked up again while it is still settling from the last drop is hidden and shifted.
+  it('shows the lifted copy even when the line was hidden as it was picked up', async () => {
+    await setup(seedAC);
+    const a = rows()[0] as HTMLElement;
+    a.style.opacity = '0';
+    a.style.transform = 'translate3d(0px, 30px, 0)';
+    fireEvent.touchStart(a, { touches: [{ clientX: 20, clientY: 20 }] });
+    await waitFor(() => expect(ghost()).not.toBeNull(), { timeout: 2000 });
+    const copy = ghost()!.firstElementChild as HTMLElement;
+    expect(copy.style.opacity).toBe('');
+    expect(copy.style.transform).toBe('');
+    fireEvent.touchEnd(a);
+    await waitFor(() => expect(ghost()).toBeNull());
+  });
+
+  it('leaves the lifted copy out of what a screen reader finds', async () => {
+    await setup(seedAC);
+    fireEvent.touchStart(rows()[0], { touches: [{ clientX: 20, clientY: 20 }] });
+    await waitFor(() => expect(ghost()).not.toBeNull(), { timeout: 2000 });
+    expect(lines()).toEqual(['A', 'C']);
+    fireEvent.touchEnd(rows()[0]);
+    await waitFor(() => expect(ghost()).toBeNull());
+  });
 });
 
 describe('selecting several items', () => {
