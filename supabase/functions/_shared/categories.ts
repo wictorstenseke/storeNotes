@@ -15,6 +15,7 @@ export const CATEGORIES = [
   'canned',
   'baking',
   'spices_sauces',
+  'texmex',
   'breakfast',
   'snacks',
   'biscuits',

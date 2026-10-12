@@ -11,6 +11,8 @@ export type StoreDef = { id: string; name: string; baseline: Category[] };
 //   och hushåll längst in, hygien, barn, djur, övrigt; läsk, saft, öl och cider
 //   i närheten av snacksen; sist snacks, godis och
 //   den andra frysen med glass, bär och fryst frukt.
+// Everything for tacos (tacobröd, tacosås, tacokrydda) is in one place, apart
+// from the bread and the other sauces. He did not say where; texmex is a guess.
 // The app adjusts this order from the order items are checked off.
 const WILLYS: Category[] = [
   'produce',
@@ -27,6 +29,7 @@ const WILLYS: Category[] = [
   'eggs',
   'canned',
   'spices_sauces',
+  'texmex', // guess: the taco shelf by the spices and sauces
   'pantry',
   'pasta_rice',
   'breakfast',
@@ -61,6 +64,7 @@ const ICA: Category[] = [
   'pasta_rice',
   'pantry', // guess: dry goods by the pasta
   'canned', // guess: by the ketchup
+  'texmex', // guess: the taco shelf by the ketchup
   'spices_sauces',
   'baking', // corrected: same aisle as the ketchup
   'bakery',

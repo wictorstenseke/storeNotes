@@ -3,14 +3,19 @@ import { CATEGORIES, isCategory } from './categories';
 import { STORES, getStore } from './stores';
 
 describe('categories', () => {
-  it('has 28 unique categories', () => {
-    expect(CATEGORIES).toHaveLength(28);
-    expect(new Set(CATEGORIES).size).toBe(28);
+  it('has 29 unique categories', () => {
+    expect(CATEGORIES).toHaveLength(29);
+    expect(new Set(CATEGORIES).size).toBe(29);
   });
 
   it('keeps biscuits apart from snacks', () => {
     // Willys has a biscuit and cookie section by the chilled drinks.
     expect(isCategory('biscuits')).toBe(true);
+  });
+
+  it('keeps texmex apart from bread and sauces', () => {
+    // Everything for tacos is in one place, so tacobröd is not with the bread.
+    expect(isCategory('texmex')).toBe(true);
   });
 
   it('keeps chilled sauces and the second freezer apart from their look-alikes', () => {
@@ -60,6 +65,7 @@ describe('stores', () => {
     expect(before('frozen', 'eggs')).toBe(true);
     expect(before('canned', 'spices_sauces')).toBe(true);
     expect(before('spices_sauces', 'pasta_rice')).toBe(true);
+    expect(order.indexOf('texmex') - order.indexOf('spices_sauces')).toBe(1);
     expect(before('baking', 'coffee_tea')).toBe(true);
     expect(before('coffee_tea', 'household')).toBe(true);
     expect(order.slice(-5)).toEqual(['other', 'beverages', 'snacks', 'candy', 'frozen_sweet']);
@@ -82,6 +88,7 @@ describe('stores', () => {
     expect(order.indexOf('deli') - order.indexOf('chilled_sauces')).toBe(1);
     expect(order.indexOf('baking') - order.indexOf('spices_sauces')).toBe(1);
     expect(order.indexOf('biscuits') - order.indexOf('bakery')).toBe(1);
+    expect(order.indexOf('spices_sauces') - order.indexOf('texmex')).toBe(1);
     expect(order).not.toEqual(STORES[0].baseline);
   });
 

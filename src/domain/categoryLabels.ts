@@ -19,6 +19,7 @@ export const CATEGORY_LABELS: Record<Category, { name: string; examples?: string
   canned: { name: 'Konserver' },
   baking: { name: 'Bakning', examples: 'mjöl, socker' },
   spices_sauces: { name: 'Kryddor & såser', examples: 'ketchup, senap' },
+  texmex: { name: 'Texmex', examples: 'tacobröd, tacosås, tacokrydda' },
   breakfast: { name: 'Frukost', examples: 'flingor, müsli' },
   snacks: { name: 'Snacks' },
   biscuits: { name: 'Kex & kakor', examples: 'kex, kakor, digestive' },

@@ -81,7 +81,7 @@ export async function categorize(
 // categories look alike but sit in different parts of the store.
 const CATEGORY_HINTS: Record<Category, string> = {
   produce: 'frukt, grönsaker, färska örter, potatis',
-  bakery: 'bröd, bullar, tortilla',
+  bakery: 'bröd, bullar (not tortilla or tacobröd)',
   dairy: 'mjölk, fil, yoghurt, grädde, smör, crème fraiche',
   cheese: 'ost, riven ost, färskost, fetaost',
   eggs: 'ägg',
@@ -97,9 +97,11 @@ const CATEGORY_HINTS: Record<Category, string> = {
   canned: 'konserver: krossade tomater, majs, bönor på burk, tonfisk på burk, kokosmjölk',
   baking: 'mjöl, socker, bakpulver, jäst, vaniljsocker, choklad för bakning',
   spices_sauces:
-    'kryddor, salt, and sauces from the shelf: ketchup, senap, soja, sweet chili, tacosås, pastasås',
+    'kryddor, salt, and sauces from the shelf: ketchup, senap, soja, sweet chili, pastasås (not tacosås or tacokrydda)',
+  texmex:
+    'the taco shelf, everything for tacos in one place: tacobröd, tortilla, tacoskal, tacosås, salsa, tacokrydda, fajitakrydda, nachochips, jalapeños på burk',
   breakfast: 'flingor, müsli, gröt, havregryn, sylt, honung',
-  snacks: 'chips, popcorn, nötter som snacks (not kex or kakor)',
+  snacks: 'chips, popcorn, nötter som snacks (not kex or kakor, not nachochips)',
   biscuits: 'the biscuit and cookie section, by the chilled drinks: kex, kakor, cookies, digestive, havrekex, mariekex, chokladkex',
   candy: 'godis, choklad, tuggummi',
   juice: 'chilled juice kept by the dairy: apelsinjuice, äppeljuice, färskpressad juice, smoothie',
