@@ -3,6 +3,16 @@ name: Deploy
 on:
   push:
     branches: [main]
+    # Nothing here reaches the app bundle or its tests. supabase/functions
+    # stays in: the app imports _shared and npm test runs its tests.
+    paths-ignore:
+      - '.claude/**'
+      - 'docs/**'
+      - '**/*.md'
+      - '.gitignore'
+      - '.env.example'
+      - 'supabase/migrations/**'
+      - 'supabase/config.toml'
   workflow_dispatch:
 
 permissions:
