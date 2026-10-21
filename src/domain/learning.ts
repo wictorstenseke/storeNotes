@@ -5,7 +5,7 @@ import type { Item } from './types';
 export type Scores = Record<string, number>;
 
 const MIN_TRIP_CATEGORIES = 3;
-const KEEP = 0.7;
+const KEEP = 0.85;
 
 export function baselineScores(baseline: Category[]): Scores {
   const last = baseline.length - 1;

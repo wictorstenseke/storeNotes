@@ -146,7 +146,7 @@ describe('clearDone', () => {
     expect(ctx.s().items.map((i) => i.id)).toEqual([keep]);
     expect(ctx.s().storeOrders).toHaveLength(1);
     expect(ctx.s().storeOrders[0].store_id).toBe('s1');
-    expect(ctx.s().storeOrders[0].scores.produce).toBeCloseTo(0.3);
+    expect(ctx.s().storeOrders[0].scores.produce).toBeCloseTo(0.15);
 
     await ctx.s().idle();
     expect(await ctx.db.store_orders.get(['list-1', 's1'])).toBeDefined();
@@ -280,9 +280,9 @@ describe('store order set by hand', () => {
     ctx.s().checkItem(ice, 's1');
     ctx.s().clearDone(ctx.sectionId);
     const scores = scoresFor(ctx)!;
-    // frozen was 0 by hand and was checked last (1): 0.7 * 0 + 0.3 * 1
-    expect(scores.frozen).toBeCloseTo(0.3);
-    // produce was 0.5 by hand and was checked first (0): 0.7 * 0.5 + 0.3 * 0
-    expect(scores.produce).toBeCloseTo(0.35);
+    // frozen was 0 by hand and was checked last (1): 0.85 * 0 + 0.15 * 1
+    expect(scores.frozen).toBeCloseTo(0.15);
+    // produce was 0.5 by hand and was checked first (0): 0.85 * 0.5 + 0.15 * 0
+    expect(scores.produce).toBeCloseTo(0.425);
   });
 });

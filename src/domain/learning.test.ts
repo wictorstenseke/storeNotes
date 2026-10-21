@@ -44,9 +44,9 @@ describe('tripRanks', () => {
 });
 
 describe('applyTrip', () => {
-  it('moves each score 30% toward the trip rank and leaves others alone', () => {
+  it('moves each score 15% toward the trip rank and leaves others alone', () => {
     const next = applyTrip({ produce: 0, dairy: 0.5, frozen: 1 }, { produce: 1, dairy: 0.5 });
-    expect(next.produce).toBeCloseTo(0.3);
+    expect(next.produce).toBeCloseTo(0.15);
     expect(next.dairy).toBeCloseTo(0.5);
     expect(next.frozen).toBe(1);
   });
@@ -75,8 +75,8 @@ describe('learnFromDone', () => {
       {},
     );
     expect(Object.keys(learned)).toEqual(['s1']);
-    expect(learned.s1.frozen).toBeCloseTo(0.7 * 0.5 + 0.3 * 0);
-    expect(learned.s1.produce).toBeCloseTo(0.7 * 0 + 0.3 * 1);
+    expect(learned.s1.frozen).toBeCloseTo(0.85 * 0.5 + 0.15 * 0);
+    expect(learned.s1.produce).toBeCloseTo(0.85 * 0 + 0.15 * 1);
     expect(learned.s1.candy).toBe(0.75);
   });
 
