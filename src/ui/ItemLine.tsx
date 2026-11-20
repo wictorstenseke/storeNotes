@@ -1,8 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { CheckIcon } from 'lucide-react';
 import type { Item } from '../domain/types';
 
 export type ItemLineProps = {
   item: Item;
+  // Just checked off, and staying in place for a moment before it moves to the done group.
+  checked?: boolean;
   wantFocus: boolean;
   onFocused(): void;
   onFocus(): void;
@@ -15,7 +18,7 @@ export type ItemLineProps = {
 };
 
 export function ItemLine(props: ItemLineProps) {
-  const { item, wantFocus } = props;
+  const { item, wantFocus, checked = false } = props;
   const field = useRef<HTMLTextAreaElement>(null);
   const editing = useRef(false);
   // True once something has been typed since the line gained focus.
@@ -78,7 +81,7 @@ export function ItemLine(props: ItemLineProps) {
 
   return (
     <div
-      className="flex min-h-[30px] items-start gap-2.5 px-5"
+      className="flex min-h-[32px] items-start gap-2.5 px-5"
       data-item-id={item.id}
       onClick={(event) => {
         // Shift- and Cmd-click select lines; they must not start editing one.
@@ -89,14 +92,18 @@ export function ItemLine(props: ItemLineProps) {
       <button
         type="button"
         role="checkbox"
-        aria-checked={false}
-        aria-label={`Markera ${item.text}`}
-        className="mt-1 size-[22px] shrink-0 rounded-full border-[1.5px] border-line"
+        aria-checked={checked}
+        aria-label={`${checked ? 'Avmarkera' : 'Markera'} ${item.text}`}
+        className={`mt-[5px] grid size-[22px] shrink-0 place-items-center rounded-full ${
+          checked ? 'bg-done text-white' : 'border-[1.5px] border-line'
+        }`}
         onClick={(event) => {
           event.stopPropagation();
           toggle();
         }}
-      />
+      >
+        {checked && <CheckIcon className="size-3.5" strokeWidth={3} />}
+      </button>
       <textarea
         ref={field}
         rows={1}
@@ -104,7 +111,9 @@ export function ItemLine(props: ItemLineProps) {
         aria-label="Vara"
         autoCapitalize="sentences"
         enterKeyHint="next"
-        className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-1 text-[16px] leading-[22px] caret-notes-ink outline-none"
+        className={`min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-[5px] text-[16px] leading-[22px] caret-notes-ink outline-none ${
+          checked ? 'text-ink-2' : ''
+        }`}
         onChange={(event) => {
           dirty.current = true;
           setDraft(event.target.value.replace(/\s*[\r\n]+\s*/g, ' '));

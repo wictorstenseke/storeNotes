@@ -34,8 +34,11 @@ import { useSeen } from './useSeen';
 import { DoneGroup } from './DoneGroup';
 import { DragGhost, useDragGhost } from './DragGhost';
 import { ItemLine } from './ItemLine';
-import { MOTION } from './motion';
+import { MOTION, SETTLE_MS } from './motion';
 import { SectionMenu } from './SectionMenu';
+
+// Where a just-toggled line is shown until it settles, and the check time it sorted by.
+type Kept = { from: 'open' | 'done'; checkedAt: string | null };
 
 type DragListeners = ReturnType<typeof useSortable>['listeners'];
 
@@ -211,8 +214,47 @@ export function SectionView({ section }: { section: Section }) {
     return effectiveOrder(activeStore.baseline, scores);
   }, [activeStore, storeOrders]);
 
-  const open = useMemo(() => sortOpen(mine, order, hold), [mine, order, hold]);
-  const done = useMemo(() => sortDone(mine), [mine]);
+  // A line that was just checked or unchecked stays in the group it was tapped
+  // in (and keeps its place there) until the taps stop, then they all move at once.
+  const [kept, setKept] = useState<ReadonlyMap<string, Kept>>(new Map());
+  const settle = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(settle.current), []);
+  const keep = (item: Item, from: Kept['from']) => {
+    setKept((prev) =>
+      prev.has(item.id) ? prev : new Map(prev).set(item.id, { from, checkedAt: item.checked_at }),
+    );
+    clearTimeout(settle.current);
+    settle.current = setTimeout(() => setKept(new Map()), SETTLE_MS);
+  };
+  const toggle = (id: string, from: Kept['from']) => {
+    const item = note.items.find((i) => i.id === id);
+    if (!item) return;
+    keep(item, from);
+    if (item.checked) note.uncheckItem(id);
+    else note.checkItem(id, activeStore?.id ?? null);
+  };
+
+  // What is really checked, as opposed to which group a line is shown in.
+  const checkedIds = useMemo(() => new Set(mine.filter((i) => i.checked).map((i) => i.id)), [mine]);
+  // The lines as the two groups should sort them: a kept line as it was when tapped.
+  const placed = useMemo(
+    () =>
+      mine.map((item) => {
+        const was = kept.get(item.id);
+        if (!was) return item;
+        return was.from === 'open'
+          ? { ...item, checked: false }
+          : { ...item, checked: true, checked_at: was.checkedAt };
+      }),
+    [mine, kept],
+  );
+
+  const open = useMemo(() => sortOpen(placed, order, hold), [placed, order, hold]);
+  const done = useMemo(() => sortDone(placed), [placed]);
+  const uncheckedDone = useMemo(
+    () => new Set(done.filter((i) => !checkedIds.has(i.id)).map((i) => i.id)),
+    [done, checkedIds],
+  );
 
   const manual = order === null;
   const [openList, animateOpen] = useAutoAnimate<HTMLDivElement>(MOTION);
@@ -231,7 +273,9 @@ export function SectionView({ section }: { section: Section }) {
   const onDragEnd = (event: DragEndEvent) => {
     drop();
     const overId = event.over?.id;
-    const to = overId === undefined ? -1 : open.findIndex((i) => i.id === overId);
+    // Lines waiting to move to the done group are not part of the manual order.
+    const live = open.filter((i) => !checkedIds.has(i.id));
+    const to = overId === undefined ? -1 : live.findIndex((i) => i.id === overId);
     if (to >= 0 && overId !== event.active.id) note.moveItem(String(event.active.id), to);
     requestAnimationFrame(() => animateOpen(true));
   };
@@ -362,8 +406,7 @@ export function SectionView({ section }: { section: Section }) {
       if (target) ui.requestFocus(target.id);
     },
     onExtend: (dir: -1 | 1) => extend(item.id, item.id, dir),
-    onToggle: () =>
-      note.checkItem(item.id, activeStore?.id ?? null),
+    onToggle: () => toggle(item.id, 'open'),
   });
 
   return (
@@ -459,6 +502,7 @@ export function SectionView({ section }: { section: Section }) {
                 >
                   <ItemLine
                     item={item}
+                    checked={checkedIds.has(item.id)}
                     wantFocus={focusId === item.id}
                     {...lineHandlers(item, index)}
                   />
@@ -474,15 +518,16 @@ export function SectionView({ section }: { section: Section }) {
         <button
           type="button"
           aria-label={`Lägg till vara i ${section.title || 'listan'}`}
-          className="flex min-h-[30px] w-full items-start px-5 text-left text-ink-2"
+          className="flex min-h-[32px] w-full items-start px-5 text-left text-ink-2"
           onClick={() => startLine(null, 0)}
         >
-          <span className="py-1 text-[16px] italic leading-[22px]">Lägg till</span>
+          <span className="py-[5px] text-[16px] italic leading-[22px]">Lägg till</span>
         </button>
       )}
       <DoneGroup
         items={done}
-        onUncheck={note.uncheckItem}
+        unchecked={uncheckedDone}
+        onToggle={(id) => toggle(id, 'done')}
         onClear={() => note.clearDone(section.id)}
       />
         </>

@@ -101,7 +101,7 @@ describe('editing', () => {
     expect(add()).toBeNull();
     await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
     await user.click(screen.getByRole('checkbox', { name: 'Markera C' }));
-    expect(add()).toHaveTextContent('Lägg till');
+    await waitFor(() => expect(add()).toHaveTextContent('Lägg till'), { timeout: 3000 });
     await user.click(add()!);
     expect(document.activeElement).toBe(fields()[0]);
     await user.keyboard('Z');
@@ -127,43 +127,64 @@ describe('editing', () => {
 });
 
 describe('checking off', () => {
+  // A toggled line stays put for a moment (SETTLE_MS) before it changes group.
+  const settled = { timeout: 3000 };
+
   it('moves a checked item to Done and back when the Done item is tapped', async () => {
     const { user } = await setup(seedAC);
     await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
-    expect(lines()).toEqual(['C']);
+    await waitFor(() => expect(lines()).toEqual(['C']), settled);
     await user.click(screen.getByRole('checkbox', { name: 'Avmarkera A' }));
-    expect(lines()).toEqual(['A', 'C']);
+    await waitFor(() => expect(lines()).toEqual(['A', 'C']), settled);
     expect(screen.queryByRole('checkbox', { name: 'Avmarkera A' })).toBeNull();
   });
 
-  it('clears Done items', async () => {
+  it('keeps a checked line in place, ticked, until the taps stop', async () => {
     const { store, user } = await setup(seedAC);
     await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
-    await user.click(screen.getByRole('button', { name: 'Rensa klara' }));
+    expect(store.getState().items.find((i) => i.text === 'A')?.checked).toBe(true);
+    expect(lines()).toEqual(['A', 'C']);
+    expect(screen.getByRole('checkbox', { name: 'Avmarkera A' })).toBeChecked();
+  });
+
+  it('unchecks a line again when it is tapped before it has moved', async () => {
+    const { store, user } = await setup(seedAC);
+    await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Avmarkera A' }));
+    expect(store.getState().items.find((i) => i.text === 'A')?.checked).toBe(false);
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    expect(lines()).toEqual(['A', 'C']);
+  });
+
+  it('keeps an unchecked Done line in place until the taps stop', async () => {
+    const { store, user } = await setup(seedAC);
+    act(() => {
+      for (const item of store.getState().items) store.getState().checkItem(item.id, null);
+    });
+    await user.click(screen.getByRole('checkbox', { name: 'Avmarkera A' }));
+    expect(store.getState().items.find((i) => i.text === 'A')?.checked).toBe(false);
+    expect(lines()).toEqual([]);
+    expect(screen.getByRole('checkbox', { name: 'Markera A' })).not.toBeChecked();
+    await waitFor(() => expect(lines()).toEqual(['A']), settled);
+  });
+
+  it('clears Done items after asking', async () => {
+    const { store, user } = await setup(seedAC);
+    await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
+    await user.click(await screen.findByRole('button', { name: 'Rensa klara' }, settled));
     expect(store.getState().items).toHaveLength(2);
-    await user.click(screen.getByRole('button', { name: 'Jag är säker' }));
+    await user.click(await screen.findByRole('button', { name: 'Rensa' }));
     expect(store.getState().items.map((i) => i.text)).toEqual(['C']);
     expect(screen.queryByRole('button', { name: 'Rensa klara' })).toBeNull();
   });
 
-  it('backs out of clearing when the button loses focus', async () => {
+  it('backs out of clearing with Avbryt', async () => {
     const { store, user } = await setup(seedAC);
     await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
-    await user.click(screen.getByRole('button', { name: 'Rensa klara' }));
-    await user.click(document.body);
-    expect(screen.getByRole('button', { name: 'Rensa klara' })).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Rensa klara' }, settled));
+    await user.click(await screen.findByRole('button', { name: 'Avbryt' }));
     expect(store.getState().items).toHaveLength(2);
   });
-
-  it('backs out of clearing after a few seconds', async () => {
-    const { user } = await setup(seedAC);
-    await user.click(screen.getByRole('checkbox', { name: 'Markera A' }));
-    await user.click(screen.getByRole('button', { name: 'Rensa klara' }));
-    expect(screen.getByRole('button', { name: 'Jag är säker' })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Rensa klara' })).toBeInTheDocument(), {
-      timeout: 5000,
-    });
-  }, 8000);
 });
 
 describe('store order', () => {
